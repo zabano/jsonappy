@@ -63,6 +63,8 @@ changes in their adapter and update relevant examples and documentation.
 The minimum supported Python version is 3.12. CI runs the test suite,
 builds packages, and checks installed core imports on Python 3.12, 3.13,
 and 3.14. Keep this matrix current when adding supported Python versions.
+The workflow skips pushes and pull requests whose changed files are all `.md`
+files. Run documentation example checks locally for Markdown-only changes.
 
 ## Documentation examples and typing
 
