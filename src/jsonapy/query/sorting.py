@@ -1,6 +1,14 @@
+"""Parse sort directions and validate sortable public field paths.
+
+SortSpecList accepts comma-separated fields with a leading minus for
+descending order. resolve_sorts follows declared relationships and checks the
+terminal field's sortable option. Backend adapters translate the resulting
+ResolvedSort objects into ordering expressions and enforce backend limits.
+"""
+
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Iterable
+from typing import Iterable, Iterator
 
 from ..resource import ResolvedFieldPath
 from ..resource.base import Resource
@@ -107,7 +115,7 @@ class SortSpecList:
 
     items: tuple[SortSpec, ...] = ()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[SortSpec]:
         return iter(self.items)
 
     def __len__(self) -> int:

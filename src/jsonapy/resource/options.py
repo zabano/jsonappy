@@ -1,3 +1,11 @@
+"""Metadata declaring field filtering, sorting, and mutation capabilities.
+
+Filter subclasses select the operation inferred from a field's declaration;
+Sortable records sort configuration. FieldOptions normalizes boolean
+capability flags. These objects carry metadata only; query resolution and
+backend adapters enforce and implement it.
+"""
+
 class Sortable:
     """
     Marks a field as sortable.

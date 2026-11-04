@@ -1,3 +1,11 @@
+"""Apply page limits and build or execute SQLAlchemy count statements.
+
+apply_pagination adds OFFSET and LIMIT. build_count_query strips ordering and
+pagination before counting a subquery; execute_count runs it synchronously on
+a supplied session. Counts reflect statement rows, so caller-provided joins
+must preserve the intended resource cardinality. No session is created here.
+"""
+
 from typing import Any
 
 from sqlalchemy import Select, func, select

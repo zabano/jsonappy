@@ -1,3 +1,12 @@
+"""Resource construction, declaration inspection, and type registration.
+
+ResourceMeta collects inherited fields and relationships and validates public
+names when classes are defined. Resource provides declaration lookups and
+identifier resolution. Concrete types register globally unless registration
+is disabled; validate_all resolves deferred targets after imports complete.
+No model access beyond identifier resolution or persistence occurs here.
+"""
+
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, Type
 
@@ -13,6 +22,7 @@ class ResourceMeta(type):
     Collects and validates declarative Field and Relationship definitions.
     """
 
+    abstract: bool
     _declared_fields: dict[str, Field]
     _declared_relationships: dict[str, Relationship]
 
@@ -237,6 +247,22 @@ class Resource(metaclass=ResourceMeta):
     - SQLAlchemy
     - Pydantic
     - Marshmallow
+
+    Concrete subclasses require a nonempty ``type`` and register it globally
+    unless ``register = False``. Abstract bases use ``abstract = True``;
+    abstractness is not inherited. Identifiers come from ``id_attribute``
+    (default ``id``) or ``id_resolver`` when supplied.
+
+    Examples:
+        >>> from jsonapy.resource import String
+        >>> class ArticleResource(Resource):
+        ...     type = "example-articles"
+        ...     register = False
+        ...     title = String(public_name="headline", required=True)
+        >>> ArticleResource.public_field_name("title")
+        'headline'
+        >>> ArticleResource.field_for_public_name("headline")[0]
+        'title'
     """
 
     model: Any = None

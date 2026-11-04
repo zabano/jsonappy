@@ -1,3 +1,11 @@
+"""Page-based pagination specifications and response metadata.
+
+PageSpec validates page numbers and bounded sizes and exposes offset and
+limit values. PaginationMeta describes totals and page counts separately
+from client intent. Database adapters apply limits and count records;
+applications supply stable ordering for predictable pagination.
+"""
+
 from dataclasses import dataclass
 
 DEFAULT_PAGE_NUMBER = 1

@@ -1,3 +1,11 @@
+"""Relationship declarations and deferred target resolution.
+
+Relationship targets may be Resource classes, registered JSON:API type
+strings, or zero-argument callables. Declarations describe cardinality and
+mutation requirements. Adapters inspect linkage; applications resolve ids,
+authorize related objects, and persist relationship changes.
+"""
+
 from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeAlias, cast
 
@@ -22,6 +30,18 @@ class Relationship:
     a Resource class directly, or a zero-argument callable. Type strings
     avoid imports between resource modules, while callables support forward
     declarations within one module.
+
+    Args:
+        resource: Target resource class, registered type, or deferred callable.
+        many: Use an array of identifiers for linkage; defaults to false.
+        public_name: Client-facing name, separate from the Python attribute.
+        writable: Accept the relationship in mutation documents.
+        required: Require linkage on create; updates may omit it.
+        nullable: Allow null to-one linkage; to-many linkage always needs an
+            array, with an empty array representing no related resources.
+
+    Declarations describe linkage only. Applications resolve identifiers,
+    enforce permissions, and persist relationship changes.
 
     Examples:
 
@@ -75,6 +95,10 @@ class Relationship:
     def resolve_resource(self) -> type["Resource"]:
         """
         Resolve and return the target Resource class.
+
+        Raises:
+            LookupError: A string target is not in the process-wide registry.
+            TypeError: The target or deferred callable is invalid.
 
         A Resource class is callable too, so we distinguish a Resource
         class from a deferred zero-argument callable explicitly.

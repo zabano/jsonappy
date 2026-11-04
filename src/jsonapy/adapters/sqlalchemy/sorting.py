@@ -1,7 +1,15 @@
+"""Translate resolved sort paths into SQLAlchemy ordering expressions.
+
+resolve_sqlalchemy_sort locates mapped columns and rejects to-many paths.
+apply_sorting attaches expressions to a SELECT without executing it. The
+query adapter constructs relationship joins and adapts expressions to aliases;
+standalone callers must provide any required joins themselves.
+"""
+
 from dataclasses import dataclass
 from typing import Any, Iterable
 
-from sqlalchemy import asc, desc
+from sqlalchemy import Select, asc, desc
 from sqlalchemy.orm import RelationshipProperty
 from sqlalchemy.sql.elements import UnaryExpression, ColumnElement
 
@@ -251,9 +259,9 @@ def sqlalchemy_order_by(
 
 
 def apply_sorting(
-        stmt,
+        stmt: Select[Any],
         sorts: Iterable[SQLAlchemyResolvedSort],
-):
+) -> Select[Any]:
     """
     Apply already-resolved SQLAlchemy sorting expressions to a Select.
 

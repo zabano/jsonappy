@@ -1,3 +1,12 @@
+"""Translate sparse fieldsets into ORM column loading options.
+
+resolve_sqlalchemy_fieldset uses load_only for mapped columns while retaining
+ORM identity columns. Empty fieldsets defer non-identity columns. Computed
+fields keep columns unrestricted because dependencies are undeclared.
+Relationship loading belongs to the include adapter; serialization remains
+responsible for enforcing the public output fieldset.
+"""
+
 from dataclasses import dataclass
 from typing import Any
 

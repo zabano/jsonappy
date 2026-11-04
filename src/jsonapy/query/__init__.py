@@ -1,3 +1,18 @@
+"""Public query specifications, parsers, resolvers, and query errors.
+
+Parsing records client syntax; resolution checks public names and declared
+capabilities against a Resource. QuerySpec combines sorting, filtering,
+page-based pagination, sparse fieldsets, and relationship includes. Database
+execution and HTTP parameter extraction belong to adapters.
+
+Examples:
+    >>> query = QuerySpec.parse(sort="-title", page_number="2", page_size="5")
+    >>> query.pagination.offset
+    5
+    >>> query.sort.to_query_string()
+    '-title'
+"""
+
 from .fieldsets import (
     FieldsetResolutionError,
     FieldsetSpec,

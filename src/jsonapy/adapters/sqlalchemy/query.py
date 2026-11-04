@@ -1,3 +1,12 @@
+"""Compose ORM filters, joins, loading options, sorting, and pagination.
+
+resolve_sqlalchemy_query translates declarations into backend components;
+apply_sqlalchemy_query attaches them to a SELECT. To-one paths share joins,
+with aliases for repeated target models. Sorting-only joins preserve absent
+optional relationships. Count helpers remove pagination; applications execute
+statements and own sessions, transactions, and authorization.
+"""
+
 from dataclasses import replace
 from typing import Any
 

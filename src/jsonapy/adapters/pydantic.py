@@ -1,3 +1,12 @@
+"""Pydantic document models, mutation validation, and JSON:API serialization.
+
+Install the pydantic extra. validate_request_document resolves public names
+and validates values and linkage without performing application lookups or
+writes. serialize_document and serialize_collection build primary and
+included resources; to_payload preserves required nulls in JSON-compatible
+output. Callers supply accessible objects and manage persistence and sessions.
+"""
+
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -15,6 +24,8 @@ from ..resource.fields import ComputedField, Field
 
 
 class JSONAPIModel(BaseModel):
+    """Base document model rejecting unknown members and preserving linkage nulls."""
+
     model_config = ConfigDict(extra="forbid")
 
     def to_payload(self) -> dict[str, Any]:
@@ -24,18 +35,24 @@ class JSONAPIModel(BaseModel):
 
 
 class ResourceIdentifier(JSONAPIModel):
+    """JSON:API linkage containing a public resource type and string identifier."""
+
     type: str
     id: str
     meta: dict[str, Any] | None = None
 
 
 class RelationshipObject(JSONAPIModel):
+    """Relationship linkage: one identifier, an array, or null for a to-one."""
+
     data: ResourceIdentifier | list[ResourceIdentifier] | None
     links: dict[str, Any] | str | None = None
     meta: dict[str, Any] | None = None
 
 
 class ResourceRequestObject(JSONAPIModel):
+    """Mutation resource object; semantic validation checks names and values."""
+
     type: str
     id: str | None = None
     attributes: dict[str, Any] | None = None
@@ -43,21 +60,29 @@ class ResourceRequestObject(JSONAPIModel):
 
 
 class JSONAPIRequestDocument(JSONAPIModel):
+    """Single-resource mutation document, structurally validated by Pydantic."""
+
     data: ResourceRequestObject
 
 
 class ResourceObject(ResourceIdentifier):
+    """Serialized resource with optional attributes, relationships, and links."""
+
     attributes: dict[str, Any] | None = None
     relationships: dict[str, RelationshipObject] | None = None
     links: dict[str, Any] | str | None = None
 
 
 class JSONAPIVersion(JSONAPIModel):
+    """Optional top-level JSON:API version information, defaulting to version 1.1."""
+
     version: str = "1.1"
     meta: dict[str, Any] | None = None
 
 
 class JSONAPIDocument(JSONAPIModel):
+    """Success document with single, collection, or null primary resource data."""
+
     data: ResourceObject | list[ResourceObject] | None
     included: list[ResourceObject] | None = None
     links: dict[str, Any] | str | None = None
@@ -66,12 +91,16 @@ class JSONAPIDocument(JSONAPIModel):
 
 
 class ErrorSource(JSONAPIModel):
+    """Error location identified by a JSON pointer, query parameter, or header."""
+
     pointer: str | None = None
     parameter: str | None = None
     header: str | None = None
 
 
 class ErrorObject(JSONAPIModel):
+    """JSON:API error details with optional status, code, source, and metadata."""
+
     id: str | None = None
     status: str | None = None
     code: str | None = None
@@ -83,6 +112,8 @@ class ErrorObject(JSONAPIModel):
 
 
 class JSONAPIErrorDocument(JSONAPIModel):
+    """Error document requiring at least one error and excluding primary data."""
+
     errors: list[ErrorObject] = PydanticField(min_length=1)
     links: dict[str, Any] | str | None = None
     meta: dict[str, Any] | None = None
@@ -113,7 +144,14 @@ class ResourceRequestError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class ValidatedResourceRequest:
-    """Request values resolved from public names to model attribute names."""
+    """Mutation input keyed by Python declaration names.
+
+    ``id`` is the client identifier, or None on a create without an id.
+    ``attributes`` contains validated values, including converted dates,
+    UUIDs, and enums. ``relationships`` retains linkage objects containing
+    public resource types and string ids. Applications resolve and authorize
+    those identifiers; this result does not contain persisted objects.
+    """
 
     id: str | None
     attributes: dict[str, Any]
@@ -176,7 +214,27 @@ def validate_request_document(
         operation: Literal["create", "update"],
         expected_id: str | None = None,
 ) -> ValidatedResourceRequest:
-    """Validate and resolve a JSON:API mutation document."""
+    """Validate mutation input and resolve public names to declaration names.
+
+    Args:
+        document: Structurally validated JSON:API request document.
+        resource: Declaration defining accepted attributes and relationships.
+        operation: Create checks required members; update requires an id and
+            accepts omitted members as a partial update.
+        expected_id: If supplied, require an exact match with the body id.
+
+    Returns:
+        Validated attributes and linkage keyed by Python declaration names.
+        Attribute values are converted according to field types.
+
+    Raises:
+        ResourceRequestError: Invalid values, unknown or read-only members,
+            missing required members, or conflicting resource types or ids.
+            Includes a JSON pointer, error code, and suggested HTTP status.
+
+    This function performs no authorization, relationship lookups,
+    persistence, transactions, or application-specific validation.
+    """
     data = document.data
 
     if data.type != resource.type:
@@ -464,6 +522,7 @@ class _DocumentSerializer:
 
             target = relationship.resolve_resource()
 
+            linkage: ResourceIdentifier | list[ResourceIdentifier] | None
             if relationship.many:
                 related = [] if value is None else list(value)
                 linkage = [
@@ -512,6 +571,8 @@ class _DocumentSerializer:
                 )
                 if not child_paths:
                     continue
+                if relationship.name is None:
+                    raise SerializationError("Resource relationship has no declaration name.")
                 try:
                     value = getattr(obj, relationship.name)
                 except AttributeError as exc:
@@ -565,7 +626,24 @@ def serialize_resource(
         fieldsets: FieldsetSpecList | None = None,
         context: Mapping[str, Any] | None = None,
 ) -> ResourceObject:
-    """Serialize one resource object without a top-level document."""
+    """Serialize one object without a top-level document or included resources.
+
+    Args:
+        obj: Object exposing the resource's declared Python attributes.
+        resource: Declaration used for naming, identifiers, and field access.
+        fieldsets: Sparse fieldsets keyed by public resource type; an empty
+            fieldset selects no attributes or relationships.
+        context: Mapping passed to computed field getters.
+
+    Returns:
+        A ResourceObject. Call ``to_payload()`` for JSON-compatible values
+        that preserve required null relationship linkage.
+
+    Raises:
+        FieldsetResolutionError: A selected field does not exist.
+        SerializationError: An identifier or attribute is missing, or a
+            non-nullable field resolves to None.
+    """
 
     normalized_fieldsets = fieldsets or FieldsetSpecList()
     _validate_document_query(
@@ -591,7 +669,31 @@ def serialize_document(
         links: dict[str, Any] | str | None = None,
         meta: dict[str, Any] | None = None,
 ) -> JSONAPIDocument:
-    """Build a single-resource JSON:API document."""
+    """Build a JSON:API document containing one object or null primary data.
+
+    Args:
+        obj: Object exposing declaration attributes, or None for null data.
+        resource: Declaration used for naming, identifiers, and field access.
+        include: Comma-separated public relationship paths or parsed specs.
+        fieldsets: Sparse fieldsets keyed by public resource type.
+        context: Mapping passed to computed field getters.
+        links: Top-level links passed through to the document model.
+        meta: Top-level metadata passed through to the document model.
+
+    Returns:
+        A JSONAPIDocument; ``to_payload()`` converts it to JSON-compatible
+        values. Includes are deduplicated by type and id while traversing
+        every requested path, including paths omitted by sparse fieldsets.
+
+    Raises:
+        IncludeResolutionError: A requested relationship path is invalid.
+        FieldsetResolutionError: A selected field does not exist.
+        SerializationError: Required object attributes or identifiers are
+            missing, or a non-nullable field resolves to None.
+
+    Related objects must be accessible before serialization. ORM attribute
+    access can trigger lazy loading; no database session is managed here.
+    """
 
     includes = _normalize_includes(include)
     normalized_fieldsets = fieldsets or FieldsetSpecList()
@@ -628,7 +730,32 @@ def serialize_collection(
         links: dict[str, Any] | str | None = None,
         meta: dict[str, Any] | None = None,
 ) -> JSONAPIDocument:
-    """Build a collection JSON:API document with deduplicated includes."""
+    """Build a collection document, consuming the input iterable once.
+
+    Args:
+        objects: Iterable of objects exposing declared Python attributes.
+            It is materialized before serialization; an empty iterable
+            produces an empty primary data array.
+        resource: Declaration shared by all primary objects.
+        include: Comma-separated public relationship paths or parsed specs.
+        fieldsets: Sparse fieldsets keyed by public resource type.
+        context: Mapping passed to computed field getters.
+        links: Top-level document links.
+        meta: Top-level document metadata.
+
+    Returns:
+        A JSONAPIDocument with included resources deduplicated by type and
+        id. Primary resources are never repeated in ``included``. Call
+        ``to_payload()`` for JSON-compatible output preserving linkage nulls.
+
+    Raises:
+        IncludeResolutionError: A requested relationship path is invalid.
+        FieldsetResolutionError: A selected field does not exist.
+        SerializationError: An object cannot satisfy its declaration.
+
+    Filtering, sorting, pagination, and ORM session management belong to
+    the caller. Only includes and sparse fieldsets shape serialization.
+    """
 
     values = list(objects)
     includes = _normalize_includes(include)

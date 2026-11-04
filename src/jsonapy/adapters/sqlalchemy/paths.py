@@ -1,3 +1,11 @@
+"""Translate public resource paths into SQLAlchemy ORM attributes.
+
+resolve_sqlalchemy_path follows declaration names through mapped classes and
+returns columns and relationship properties for query adapters. Relationship
+path resolution supports include loaders. Missing or incompatible mappings
+raise SQLAlchemyPathResolutionError; path resolution does not execute SQL.
+"""
+
 from dataclasses import dataclass
 from typing import Any
 

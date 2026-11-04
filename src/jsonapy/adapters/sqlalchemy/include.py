@@ -1,4 +1,12 @@
-from typing import Any
+"""Build selectinload options for resolved relationship include paths.
+
+build_include_options removes redundant prefixes, chains relationship loaders,
+and applies sparse fieldsets to included models. Both to-one and to-many
+relationships can be included. These helpers configure SELECT loading only;
+serializers construct compound documents and callers execute statements.
+"""
+
+from typing import Any, cast
 
 from sqlalchemy.orm import Load, RelationshipProperty, selectinload
 
@@ -60,11 +68,12 @@ def _build_loader(
             "Cannot build an include loader without relationships.",
         )
 
-    loader = selectinload(
+    # The standalone loader factory constructs a concrete Load object.
+    loader = cast(Load, selectinload(
         _relationship_attribute(
             relationships[0],
         ),
-    )
+    ))
 
     loader = _apply_included_fieldset(
         loader,
@@ -73,11 +82,12 @@ def _build_loader(
     )
 
     for index, relationship in enumerate(relationships[1:], start=1):
-        loader = loader.selectinload(
+        # Chaining a Load retains that concrete loader at runtime.
+        loader = cast(Load, loader.selectinload(
             _relationship_attribute(
                 relationship,
             ),
-        )
+        ))
         loader = _apply_included_fieldset(
             loader,
             resource_relationships[index].resolve_resource(),

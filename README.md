@@ -93,8 +93,13 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
 python -m pytest -q
+python -m mypy
 python -m build
 python -m twine check dist/*
 ```
+
+The package ships inline type annotations and a `py.typed` marker. CI checks
+the library and consumer examples with mypy, runs docstring examples, and
+executes the Python examples in this README.
 
 Licensing has not yet been selected. Add a license before public distribution.

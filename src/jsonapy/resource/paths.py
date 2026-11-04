@@ -1,3 +1,11 @@
+"""Resolve public field paths through resource declarations.
+
+resolve_field_path traverses declared relationships and requires a terminal
+attribute. ResolvedFieldPath retains declarations and Python names for later
+adapter translation. Invalid members or path shapes raise PathResolutionError;
+this module does not access ORM mappings or object instances.
+"""
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 

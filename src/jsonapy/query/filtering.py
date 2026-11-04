@@ -1,6 +1,15 @@
+"""Parse filter parameters and infer operations from field declarations.
+
+FilterSpecList preserves ordered client values as strings. resolve_filters
+checks public relationship paths and field capabilities, producing operation
+and value tuples. RangeFilter accepts colon or double-dot separators; use
+double dots for timestamp boundaries. Backend adapters convert values and
+build predicates; applications decide which fields to expose.
+"""
+
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Iterable, Mapping
+from typing import Iterable, Iterator, Mapping
 
 from ..resource.base import Resource
 from ..resource.fields import Field
@@ -121,7 +130,7 @@ class FilterSpecList:
 
     items: tuple[FilterSpec, ...] = ()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[FilterSpec]:
         return iter(self.items)
 
     def __len__(self) -> int:

@@ -1,5 +1,13 @@
+"""Parse and resolve public relationship paths for compound documents.
+
+IncludeSpecList records comma-separated include paths. resolve_includes
+requires every path component to be a declared relationship and returns the
+traversed declarations. Adapters choose loader strategies and serializers
+construct included resource objects; this module performs no object loading.
+"""
+
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Iterator
 
 from ..resource.base import Resource
 from ..resource.relationships import Relationship
@@ -89,7 +97,7 @@ class IncludeSpecList:
 
     items: tuple[IncludeSpec, ...] = ()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[IncludeSpec]:
         return iter(self.items)
 
     def __len__(self) -> int:

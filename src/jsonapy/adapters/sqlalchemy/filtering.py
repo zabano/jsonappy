@@ -1,9 +1,18 @@
+"""Convert resolved filters into typed SQLAlchemy predicates.
+
+Values are converted using mapped column types. resolve_sqlalchemy_filter
+builds expressions for the core filter operations; apply_filtering attaches
+them to a SELECT. To-many filter paths are rejected. The query adapter adds
+required joins and aliases; this module does not execute statements.
+"""
+
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from sqlalchemy import and_
+from sqlalchemy.orm import RelationshipProperty
 from sqlalchemy.sql import ColumnElement
 from sqlalchemy.sql.sqltypes import (
     Boolean,
@@ -63,7 +72,7 @@ class SQLAlchemyResolvedFilter:
         return self.path.column
 
     @property
-    def relationships(self):
+    def relationships(self) -> tuple[RelationshipProperty[Any], ...]:
         return self.path.relationships
 
     @property

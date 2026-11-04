@@ -1,5 +1,15 @@
-from collections.abc import Mapping
-from typing import Annotated, Any, Literal
+"""FastAPI dependencies, responses, and JSON:API exception handlers.
+
+Install the fastapi extra. JSONAPIQuery parses HTTP query options;
+resource_request validates mutation input. Response helpers apply includes
+and sparse fieldsets, while applications apply data filtering, sorting, and
+pagination. install_jsonapi_exception_handlers handles adapter exceptions and
+global request-validation errors. Media-type checks provide basic handling;
+full Accept quality and extension negotiation are not implemented.
+"""
+
+from collections.abc import Awaitable, Callable, Mapping
+from typing import Annotated, Any, Literal, cast
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
@@ -274,10 +284,14 @@ async def jsonapi_request_validation_handler(
 def install_jsonapi_exception_handlers(app: FastAPI) -> None:
     """Install handlers for exceptions raised by this adapter."""
 
-    app.add_exception_handler(JSONAPIHTTPException, jsonapi_exception_handler)
+    # Starlette dispatches each handler only for its registered exception type.
+    app.add_exception_handler(
+        JSONAPIHTTPException,
+        cast(Callable[[Request, Exception], Awaitable[Response]], jsonapi_exception_handler),
+    )
     app.add_exception_handler(
         RequestValidationError,
-        jsonapi_request_validation_handler,
+        cast(Callable[[Request, Exception], Awaitable[Response]], jsonapi_request_validation_handler),
     )
 
 
@@ -357,7 +371,24 @@ def resource_request(
         operation: Literal["create", "update"],
         id_parameter: str | None = None,
 ) -> ResourceRequestDependency:
-    """Create a FastAPI dependency for a Resource mutation."""
+    """Create a dependency validating a single-resource mutation document.
+
+    Args:
+        resource: Declaration for accepted public types, members, and values.
+        operation: Create enforces required members; update requires an id.
+        id_parameter: Path parameter whose string value must match the body
+            id. Required for updates; optional for creates.
+
+    Returns:
+        A dependency returning ValidatedResourceRequest with Python names.
+
+    Raises:
+        ValueError: An update dependency has no id_parameter.
+
+    At request time, the dependency checks JSON:API media types and translates
+    semantic validation failures into JSONAPIHTTPException. Applications own
+    authorization, relationship lookup, persistence, and transactions.
+    """
     return ResourceRequestDependency(
         resource,
         operation=operation,
@@ -471,7 +502,16 @@ def resource_response(
         status_code: int = 200,
         headers: Mapping[str, str] | None = None,
 ) -> JSONAPIResponse:
-    """Serialize one object and return a JSON:API FastAPI response."""
+    """Return a JSON:API response for one object, or null primary data.
+
+    ``query`` supplies includes and sparse fieldsets; ``context`` is passed
+    to computed getters. ``links`` and ``meta`` become top-level document
+    members. ``status_code`` and ``headers`` configure the HTTP response.
+
+    Invalid include paths or fieldsets raise JSONAPIHTTPException with status
+    400. Object serialization failures propagate as SerializationError.
+    Filtering, sorting, and pagination must be applied by the caller.
+    """
 
     query = query or QuerySpec()
     try:
@@ -506,7 +546,18 @@ def collection_response(
         status_code: int = 200,
         headers: Mapping[str, str] | None = None,
 ) -> JSONAPIResponse:
-    """Serialize an iterable and return a JSON:API collection response."""
+    """Return a JSON:API response, consuming the objects iterable once.
+
+    ``query`` supplies includes and sparse fieldsets; ``context`` is passed
+    to computed getters. ``pagination`` adds ``meta.page``, overriding a
+    caller-supplied page member without changing other metadata. ``links``
+    supplies top-level links; ``status_code`` and ``headers`` configure HTTP.
+
+    Invalid include paths or fieldsets raise JSONAPIHTTPException with status
+    400. Object serialization failures propagate as SerializationError.
+    The caller applies filtering, sorting, and pagination before passing
+    objects; this helper only serializes the supplied results.
+    """
 
     query = query or QuerySpec()
     response_meta = dict(meta or {})

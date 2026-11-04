@@ -1,5 +1,13 @@
+"""Parse sparse fieldsets and validate exposed attributes and relationships.
+
+Each FieldsetSpec targets a public resource type. resolve_fieldsets selects
+the matching spec for a Resource and validates its public member names.
+An absent fieldset leaves selection unrestricted; an explicit empty fieldset
+selects no members. Serializers and database adapters apply those selections.
+"""
+
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Iterator
 
 from ..resource.base import Resource
 from ..resource.fields import Field
@@ -57,7 +65,7 @@ class FieldsetSpec:
             normalized_fields,
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.fields)
 
     def __len__(self) -> int:
@@ -152,7 +160,7 @@ class FieldsetSpecList:
 
     items: tuple[FieldsetSpec, ...] = ()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[FieldsetSpec]:
         return iter(self.items)
 
     def __len__(self) -> int:

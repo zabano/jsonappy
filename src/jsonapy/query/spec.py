@@ -1,3 +1,11 @@
+"""Compose individual query options into parsed and resolved specifications.
+
+QuerySpec holds client intent and supports immutable modifiers and query
+parameter formatting. resolve_query validates the specification against a
+Resource and returns ResolvedQuery. Neither representation executes a query
+or depends on an HTTP framework or database backend.
+"""
+
 from dataclasses import dataclass
 
 from .fieldsets import (
@@ -116,7 +124,18 @@ class QuerySpec:
         Construct a QuerySpec from already-separated query parameters.
 
         Parsing of individual query syntaxes remains the responsibility
-        of the corresponding query module.
+        of the corresponding query module. Resource-specific validation is
+        performed separately by ``resolve_query``. Invalid syntax raises
+        ValueError or a query-specific subclass of ValueError.
+
+        Examples:
+            >>> query = QuerySpec.parse(sort="-title", page_number="2", page_size="5")
+            >>> query.sort.to_query_string()
+            '-title'
+            >>> query.pagination.offset
+            5
+            >>> QuerySpec.parse().is_paginated
+            False
         """
 
         return cls(

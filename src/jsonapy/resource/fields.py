@@ -1,3 +1,11 @@
+"""Attribute declarations and their supported query capabilities.
+
+Concrete fields describe request value types, public names, nullability, and
+write requirements. ComputedField evaluates a caller-provided getter during
+serialization. Adapters handle conversion and object access; these
+declarations do not import framework validators or database models.
+"""
+
 from enum import Enum
 from datetime import date, datetime
 from uuid import UUID as UUIDValue
@@ -23,6 +31,18 @@ class Field:
     model.
 
     Model-specific resolution belongs to an adapter.
+
+    Args:
+        sortable: Allow clients to sort on this field; defaults to false.
+        filterable: A filter capability, or true for exact matching.
+        public_name: Client-facing name; defaults to the resource naming style.
+        nullable: Allow null during request validation and serialization.
+        writable: Accept this attribute in create and update documents.
+        required: Require this attribute on create; updates may omit it.
+
+    Declarations retain their Python attribute name for object access, even
+    when ``public_name`` exposes a different name. Unsupported filter
+    capabilities raise TypeError when the resource class is defined.
     """
 
     python_type: ClassVar[type[Any] | None] = None
@@ -272,8 +292,9 @@ class EnumField(Field):
             required=required,
         )
 
+    # Each declaration supplies its own enum instead of the class-level default.
     @property
-    def python_type(self) -> type[Enum]:
+    def python_type(self) -> type[Enum]:  # type: ignore[override]
         return self.enum
 
 
@@ -301,7 +322,24 @@ class JSON(Field):
 
 
 class ComputedField(Field):
-    """Attribute whose serialized value is produced by a callable."""
+    """Read-only attribute computed from an object and serialization context.
+
+    Args:
+        getter: Callable receiving ``(object, context)`` and returning a value.
+        public_name: Client-facing attribute name.
+        nullable: Allow the getter to return None; defaults to false.
+
+    The getter runs when the field is selected for serialization. Its
+    exceptions propagate to the caller. Filtering, sorting, and mutation
+    input are disabled. SQLAlchemy keeps all columns loaded when a sparse
+    fieldset selects a computed field, whose dependencies are undeclared.
+
+    Examples:
+        >>> from types import SimpleNamespace
+        >>> label = ComputedField(lambda obj, ctx: ctx.get("prefix", "") + obj.title)
+        >>> label.get_value(SimpleNamespace(title="News"), {"prefix": "Latest: "})
+        'Latest: News'
+    """
 
     python_type = Any
     supported_filters: ClassVar[tuple[type[Filter], ...]] = ()
@@ -331,4 +369,5 @@ class ComputedField(Field):
             obj: Any,
             context: Mapping[str, Any] | None = None,
     ) -> Any:
+        """Call the getter with an empty mapping when context is omitted."""
         return self.getter(obj, context or {})
