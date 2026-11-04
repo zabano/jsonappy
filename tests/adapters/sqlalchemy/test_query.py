@@ -2,17 +2,17 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from jsonapy.adapters.sqlalchemy.query import (
+from jsonappy.adapters.sqlalchemy.query import (
     SQLAlchemyQueryError,
     build_sqlalchemy_count_query,
     build_sqlalchemy_query,
     build_sqlalchemy_query_from_spec,
 )
-from jsonapy.query.filtering import FilterSpecList
-from jsonapy.query.include import IncludeSpecList
-from jsonapy.query.pagination import PageSpec
-from jsonapy.query.sorting import SortSpecList
-from jsonapy.query.spec import QuerySpec
+from jsonappy.query.filtering import FilterSpecList
+from jsonappy.query.include import IncludeSpecList
+from jsonappy.query.pagination import PageSpec
+from jsonappy.query.sorting import SortSpecList
+from jsonappy.query.spec import QuerySpec
 
 
 def test_builds_complete_root_column_query(article_types):
@@ -181,7 +181,7 @@ def test_builds_query_directly_from_query_spec(article_types):
 def test_distinct_paths_to_same_table_filter_sort_and_count():
     from sqlalchemy import ForeignKey, String
     from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-    from jsonapy.resource import Resource, Relationship, String as StringField
+    from jsonappy.resource import Resource, Relationship, String as StringField
 
     class Base(DeclarativeBase):
         pass

@@ -1,7 +1,7 @@
 import pytest
 
-from jsonapy.query.fieldsets import FieldsetResolutionError, FieldsetSpec, FieldsetSpecList, resolve_fieldsets
-from jsonapy.resource import Relationship, Resource, String, ResourceRegistry
+from jsonappy.query.fieldsets import FieldsetResolutionError, FieldsetSpec, FieldsetSpecList, resolve_fieldsets
+from jsonappy.resource import Relationship, Resource, String, ResourceRegistry
 
 
 TEST_REGISTRY = ResourceRegistry()

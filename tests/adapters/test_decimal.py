@@ -5,15 +5,15 @@ from decimal import Decimal as DecimalValue, localcontext
 
 import pytest
 
-from jsonapy.adapters.pydantic import (
+from jsonappy.adapters.pydantic import (
     JSONAPIRequestDocument,
     ResourceRequestError,
     SerializationError,
     serialize_document,
     validate_request_document,
 )
-from jsonapy.query.fieldsets import FieldsetSpec, FieldsetSpecList
-from jsonapy.resource import Decimal, Resource, ResourceRegistry
+from jsonappy.query.fieldsets import FieldsetSpec, FieldsetSpecList
+from jsonappy.resource import Decimal, Resource, ResourceRegistry
 
 
 @dataclass

@@ -1,5 +1,5 @@
 [project]
-name = "jsonapy"
+name = "jsonappy"
 version = "0.1.0"
 description = "Declarative JSON:API resources, query handling, and framework adapters for Python"
 readme = "README.md"
@@ -55,7 +55,7 @@ dev = [
 
 [tool.poetry]
 packages = [
-    {include = "jsonapy", from = "src"},
+    {include = "jsonappy", from = "src"},
 ]
 include = [
     {path = "docs", format = ["sdist"]},
@@ -67,7 +67,7 @@ include = [
 
 [tool.mypy]
 python_version = "3.12"
-files = ["src/jsonapy", "tests/typing", "scripts"]
+files = ["src/jsonappy", "tests/typing", "scripts"]
 check_untyped_defs = true
 disallow_untyped_defs = true
 warn_unused_ignores = true

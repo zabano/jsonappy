@@ -56,7 +56,7 @@ and 3.14. Keep this matrix current when adding supported Python versions.
 
 ## Documentation examples and typing
 
-The default pytest run executes docstring examples in `src/jsonapy` as well
+The default pytest run executes docstring examples in `src/jsonappy` as well
 as the test suite. `tests/test_documentation.py` runs the README's Python
 blocks in order and checks the documented FastAPI endpoint. Keep those
 blocks executable, including any assertions.

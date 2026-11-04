@@ -1,6 +1,6 @@
 import pytest
 
-from jsonapy.query.pagination import PageSpec, PaginationError, PaginationMeta
+from jsonappy.query.pagination import PageSpec, PaginationError, PaginationMeta
 
 
 def test_page_parsing_and_offsets():

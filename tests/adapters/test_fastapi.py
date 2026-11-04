@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from jsonapy.adapters.fastapi import (
+from jsonappy.adapters.fastapi import (
     COMMON_JSONAPI_ERROR_RESPONSES,
     JSONAPIQuery,
     collection_response,
@@ -12,9 +12,9 @@ from jsonapy.adapters.fastapi import (
     resource_response,
     validate_resource_request,
 )
-from jsonapy.adapters.pydantic import JSONAPIRequestDocument
-from jsonapy.query.pagination import PaginationMeta
-from jsonapy.resource import Resource, String, ResourceRegistry
+from jsonappy.adapters.pydantic import JSONAPIRequestDocument
+from jsonappy.query.pagination import PaginationMeta
+from jsonappy.resource import Resource, String, ResourceRegistry
 
 
 @dataclass
@@ -167,7 +167,7 @@ def test_sparse_fieldset_is_documented_with_jsonapi_parameter_name():
 def test_decimal_fastapi_request_and_response_preserve_exact_string():
     from typing import Annotated
     from decimal import Decimal as DecimalValue
-    from jsonapy.resource import Decimal
+    from jsonappy.resource import Decimal
 
     @dataclass
     class Product:
@@ -181,13 +181,13 @@ def test_decimal_fastapi_request_and_response_preserve_exact_string():
 
     from fastapi import Depends, FastAPI
     from fastapi.testclient import TestClient
-    from jsonapy.adapters.fastapi import (
+    from jsonappy.adapters.fastapi import (
         JSONAPI_MEDIA_TYPE,
         install_jsonapi_exception_handlers,
         resource_request,
         resource_response,
     )
-    from jsonapy.adapters.pydantic import ValidatedResourceRequest
+    from jsonappy.adapters.pydantic import ValidatedResourceRequest
 
     app = FastAPI()
     install_jsonapi_exception_handlers(app)

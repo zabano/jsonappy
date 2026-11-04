@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.orm import Session
 
-from jsonapy.adapters.sqlalchemy.fieldsets import resolve_sqlalchemy_fieldset
-from jsonapy.adapters.sqlalchemy.query import build_sqlalchemy_query
-from jsonapy.query.fieldsets import FieldsetSpec, FieldsetSpecList
-from jsonapy.query.include import IncludeSpecList
+from jsonappy.adapters.sqlalchemy.fieldsets import resolve_sqlalchemy_fieldset
+from jsonappy.adapters.sqlalchemy.query import build_sqlalchemy_query
+from jsonappy.query.fieldsets import FieldsetSpec, FieldsetSpecList
+from jsonappy.query.include import IncludeSpecList
 
 def test_builds_load_only_option(article_types):
     _, ArticleResource = article_types

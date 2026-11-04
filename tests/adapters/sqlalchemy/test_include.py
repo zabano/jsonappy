@@ -1,6 +1,6 @@
-from jsonapy.adapters.sqlalchemy.include import build_include_options
-from jsonapy.query.fieldsets import FieldsetSpec, FieldsetSpecList
-from jsonapy.query.include import IncludeSpecList
+from jsonappy.adapters.sqlalchemy.include import build_include_options
+from jsonappy.query.fieldsets import FieldsetSpec, FieldsetSpecList
+from jsonappy.query.include import IncludeSpecList
 
 def test_builds_loader_for_deferred_relationship(article_types):
     _, ArticleResource = article_types

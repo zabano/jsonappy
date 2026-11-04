@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
-from jsonapy.adapters.sqlalchemy.sorting import resolve_sqlalchemy_sort_spec
-from jsonapy.query.sorting import SortOrder, SortSpec
+from jsonappy.adapters.sqlalchemy.sorting import resolve_sqlalchemy_sort_spec
+from jsonappy.query.sorting import SortOrder, SortSpec
 
 def test_builds_descending_sort_expression(article_types):
     Article, ArticleResource = article_types

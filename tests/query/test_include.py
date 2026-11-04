@@ -1,7 +1,7 @@
 import pytest
 
-from jsonapy.query.include import IncludeResolutionError, IncludeSpecList, resolve_includes
-from jsonapy.resource import Relationship, Resource, ResourceRegistry
+from jsonappy.query.include import IncludeResolutionError, IncludeSpecList, resolve_includes
+from jsonappy.resource import Relationship, Resource, ResourceRegistry
 
 
 TEST_REGISTRY = ResourceRegistry()

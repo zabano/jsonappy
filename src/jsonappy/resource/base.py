@@ -253,7 +253,7 @@ class Resource(metaclass=ResourceMeta):
     (default ``id``) or ``id_resolver`` when supplied.
 
     Examples:
-        >>> from jsonapy.resource import String
+        >>> from jsonappy.resource import String
         >>> class ArticleResource(Resource):
         ...     type = "example-articles"
         ...     register = False

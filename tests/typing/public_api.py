@@ -2,16 +2,16 @@
 
 from typing import Any, assert_type
 
-from jsonapy import Resource, ResourceRegistry
-from jsonapy.adapters.pydantic import (
+from jsonappy import Resource, ResourceRegistry
+from jsonappy.adapters.pydantic import (
     JSONAPIDocument,
     JSONAPIRequestDocument,
     ValidatedResourceRequest,
     serialize_document,
     validate_request_document,
 )
-from jsonapy.query import QuerySpec, ResolvedQuery, resolve_query
-from jsonapy.resource import Field, Relationship, String
+from jsonappy.query import QuerySpec, ResolvedQuery, resolve_query
+from jsonappy.resource import Field, Relationship, String
 
 
 class ArticleResource(Resource):

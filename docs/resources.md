@@ -50,7 +50,7 @@ Resources share `Resource.registry` by default. Give each application or test
 suite a `ResourceRegistry` to keep type names and string targets isolated:
 
 ```python
-from jsonapy import Resource, ResourceRegistry
+from jsonappy import Resource, ResourceRegistry
 
 
 class AppResource(Resource):

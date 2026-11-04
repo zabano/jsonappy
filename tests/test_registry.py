@@ -2,9 +2,9 @@
 
 import pytest
 
-from jsonapy import Resource, ResourceRegistry
-from jsonapy.query import QuerySpec, resolve_query
-from jsonapy.resource import Relationship, String
+from jsonappy import Resource, ResourceRegistry
+from jsonappy.query import QuerySpec, resolve_query
+from jsonappy.resource import Relationship, String
 
 
 def test_applications_can_reuse_type_names_without_affecting_default_registry():

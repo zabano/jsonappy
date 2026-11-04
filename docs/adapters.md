@@ -8,8 +8,8 @@ The example assumes an application-defined mapped `Article` and matching
 
 ```python
 from sqlalchemy import select
-from jsonapy.query import QuerySpec
-from jsonapy.adapters.sqlalchemy import build_sqlalchemy_query_from_spec
+from jsonappy.query import QuerySpec
+from jsonappy.adapters.sqlalchemy import build_sqlalchemy_query_from_spec
 
 spec = QuerySpec.parse(sort="-title", page_number=1, page_size=25)
 stmt = build_sqlalchemy_query_from_spec(

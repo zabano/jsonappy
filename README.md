@@ -1,4 +1,4 @@
-# jsonapy
+# jsonappy
 
 Declarative JSON:API resources, query handling, and framework adapters for Python.
 
@@ -26,8 +26,8 @@ layers. Adapter imports require their corresponding extras.
 ```python
 from dataclasses import dataclass
 
-from jsonapy.resource import Resource, String
-from jsonapy.adapters.pydantic import serialize_document
+from jsonappy.resource import Resource, String
+from jsonappy.adapters.pydantic import serialize_document
 
 
 @dataclass
@@ -55,7 +55,7 @@ assert document.to_payload() == {
 
 ```python
 from fastapi import FastAPI
-from jsonapy.adapters.fastapi import (
+from jsonappy.adapters.fastapi import (
     JSONAPIQuery,
     collection_response,
     install_jsonapi_exception_handlers,

@@ -1,7 +1,7 @@
 import pytest
 
-from jsonapy.query.sorting import SortOrder, SortResolutionError, SortSpecList, resolve_sorts
-from jsonapy.resource import Integer, Relationship, Resource, String, ResourceRegistry
+from jsonappy.query.sorting import SortOrder, SortResolutionError, SortSpecList, resolve_sorts
+from jsonappy.resource import Integer, Relationship, Resource, String, ResourceRegistry
 
 
 TEST_REGISTRY = ResourceRegistry()

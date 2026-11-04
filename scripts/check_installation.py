@@ -30,25 +30,27 @@ IMPORT_CHECK = """
 import importlib
 import importlib.util
 from importlib.resources import files
+from importlib.metadata import metadata
 import json
 from pathlib import Path
 import sys
 
-import jsonapy
-import jsonapy.adapters
-from jsonapy import Resource, ResourceRegistry
-from jsonapy.query import QuerySpec
+import jsonappy
+import jsonappy.adapters
+from jsonappy import Resource, ResourceRegistry
+from jsonappy.query import QuerySpec
 
 expected = set(json.loads(sys.argv[1]))
 for module in ('pydantic', 'fastapi', 'sqlalchemy'):
     present = importlib.util.find_spec(module) is not None
     assert present == (module in expected), (module, present, expected)
     if present:
-        importlib.import_module('jsonapy.adapters.' + module)
+        importlib.import_module('jsonappy.adapters.' + module)
 
-package = Path(jsonapy.__file__).resolve().parent
+package = Path(jsonappy.__file__).resolve().parent
 assert package.is_relative_to(Path(sys.prefix).resolve()), package
-assert files('jsonapy').joinpath('py.typed').is_file()
+assert files('jsonappy').joinpath('py.typed').is_file()
+assert metadata('jsonappy')['Name'] == 'jsonappy'
 assert isinstance(Resource.registry, ResourceRegistry)
 assert QuerySpec.parse(sort='title').sort
 print(package)
@@ -70,7 +72,7 @@ def check_installation(artifacts: Path, distribution: str, extra: str) -> None:
     checkout = Path(__file__).resolve().parents[1]
     print(f"Checking {artifact.name}, profile={extra}, Python={sys.version.split()[0]}", flush=True)
 
-    with tempfile.TemporaryDirectory(prefix="jsonapy-install-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="jsonappy-install-") as temporary:
         work = Path(temporary)
         environment = work / "venv"
         venv.create(environment, with_pip=True)

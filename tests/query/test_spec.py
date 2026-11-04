@@ -1,7 +1,7 @@
-from jsonapy.query.fieldsets import FieldsetSpec, FieldsetSpecList
-from jsonapy.query.filtering import FilterSpecList
-from jsonapy.query.spec import QuerySpec, resolve_query
-from jsonapy.resource import Integer, Resource, ResourceRegistry
+from jsonappy.query.fieldsets import FieldsetSpec, FieldsetSpecList
+from jsonappy.query.filtering import FilterSpecList
+from jsonappy.query.spec import QuerySpec, resolve_query
+from jsonappy.resource import Integer, Resource, ResourceRegistry
 
 
 TEST_REGISTRY = ResourceRegistry()

@@ -2,9 +2,9 @@ import pytest
 from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from jsonapy.resource import Integer as IntegerField
-from jsonapy.resource import Relationship, Resource, ResourceRegistry
-from jsonapy.resource import String as StringField
+from jsonappy.resource import Integer as IntegerField
+from jsonappy.resource import Relationship, Resource, ResourceRegistry
+from jsonappy.resource import String as StringField
 
 
 class Base(DeclarativeBase):

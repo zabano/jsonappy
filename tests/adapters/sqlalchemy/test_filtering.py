@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
-from jsonapy.adapters.sqlalchemy.filtering import resolve_sqlalchemy_filter_spec
-from jsonapy.query.filtering import FilterSpec
+from jsonappy.adapters.sqlalchemy.filtering import resolve_sqlalchemy_filter_spec
+from jsonappy.query.filtering import FilterSpec
 
 def test_coerces_integer_filter_and_applies_expression(article_types):
     Article, ArticleResource = article_types
@@ -19,7 +19,7 @@ def test_decimal_filter_bindings_preserve_precision_for_all_supported_operations
     from decimal import Decimal as DecimalValue
     from sqlalchemy import Numeric
     from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-    from jsonapy.resource import Decimal, MultiValueFilter, RangeFilter, Resource
+    from jsonappy.resource import Decimal, MultiValueFilter, RangeFilter, Resource
 
     class Base(DeclarativeBase):
         pass
@@ -66,9 +66,9 @@ def test_datetime_range_executes_with_timestamp_boundaries():
     from datetime import datetime
     from sqlalchemy import DateTime, create_engine
     from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
-    from jsonapy.adapters.sqlalchemy.query import build_sqlalchemy_query
-    from jsonapy.query.filtering import FilterSpecList
-    from jsonapy.resource import DateTime as DateTimeField, RangeFilter, Resource
+    from jsonappy.adapters.sqlalchemy.query import build_sqlalchemy_query
+    from jsonappy.query.filtering import FilterSpecList
+    from jsonappy.resource import DateTime as DateTimeField, RangeFilter, Resource
 
     class Base(DeclarativeBase):
         pass

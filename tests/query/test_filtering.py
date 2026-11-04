@@ -1,8 +1,8 @@
 import pytest
 
-from jsonapy.query.filtering import FilterOp, FilterResolutionError, FilterSpecList, resolve_filters
-from jsonapy.resource import Boolean, Integer, Relationship, Resource, String, ResourceRegistry
-from jsonapy.resource.options import BooleanFilter, MultiValueFilter, RangeFilter
+from jsonappy.query.filtering import FilterOp, FilterResolutionError, FilterSpecList, resolve_filters
+from jsonappy.resource import Boolean, Integer, Relationship, Resource, String, ResourceRegistry
+from jsonappy.resource.options import BooleanFilter, MultiValueFilter, RangeFilter
 
 
 TEST_REGISTRY = ResourceRegistry()
@@ -69,7 +69,7 @@ def test_range_filter_allows_one_open_boundary(value, expected):
     ('..2026-01-02T12:30:00Z', ('', '2026-01-02T12:30:00Z')),
 ])
 def test_datetime_range_preserves_timestamp_colons(value, expected):
-    from jsonapy.resource import DateTime
+    from jsonappy.resource import DateTime
 
     class EventResource(Resource):
         registry = ResourceRegistry()

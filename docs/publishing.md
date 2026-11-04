@@ -4,8 +4,8 @@ This project is being prepared for its first public release.
 
 Before the first release:
 
-1. Confirm a unique PyPI distribution name and GitHub repository name. The
-   name `jsonapy` is already used by another JSON:API project on PyPI.
+1. Confirm availability of the `jsonappy` distribution and repository names
+   before publishing.
 2. Choose a license, add its text as `LICENSE`, and declare it in package
    metadata.
 3. Add the actual repository, issue tracker, and documentation URLs to

@@ -3,15 +3,15 @@ from datetime import datetime, timezone
 
 import pytest
 
-from jsonapy.adapters.pydantic import (
+from jsonappy.adapters.pydantic import (
     JSONAPIRequestDocument,
     ResourceRequestError,
     serialize_collection,
     serialize_document,
     validate_request_document,
 )
-from jsonapy.query.fieldsets import FieldsetSpec, FieldsetSpecList
-from jsonapy.resource import (
+from jsonappy.query.fieldsets import FieldsetSpec, FieldsetSpecList
+from jsonappy.resource import (
     ComputedField,
     DateTime,
     JSON,

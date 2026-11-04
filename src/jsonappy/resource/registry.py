@@ -20,7 +20,7 @@ class ResourceRegistry:
     other registry, including Resource.registry, the default registry.
 
     Examples:
-        >>> from jsonapy import Resource
+        >>> from jsonappy import Resource
         >>> catalog = ResourceRegistry()
         >>> class AuthorResource(Resource):
         ...     registry = catalog
