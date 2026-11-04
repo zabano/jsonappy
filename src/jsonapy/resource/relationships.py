@@ -1,0 +1,140 @@
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeAlias, cast
+
+if TYPE_CHECKING:
+    from .base import Resource
+
+if TYPE_CHECKING:
+    ResourceReference: TypeAlias = (
+            str
+            | type[Resource]
+            | Callable[[], type[Resource]]
+    )
+else:
+    ResourceReference: TypeAlias = object
+
+
+class Relationship:
+    """
+    Declarative JSON:API relationship.
+
+    A relationship may reference a canonical JSON:API resource type,
+    a Resource class directly, or a zero-argument callable. Type strings
+    avoid imports between resource modules, while callables support forward
+    declarations within one module.
+
+    Examples:
+
+        author = Relationship(AuthorResource)
+
+        project = Relationship("projects")
+
+        author = Relationship(
+            lambda: AuthorResource,
+        )
+
+        comments = Relationship(
+            lambda: CommentResource,
+            many=True,
+        )
+    """
+
+    def __init__(
+            self,
+            resource: ResourceReference,
+            *,
+            many: bool = False,
+            public_name: str | None = None,
+            writable: bool = True,
+            required: bool = False,
+            nullable: bool = True,
+    ) -> None:
+        if isinstance(resource, str) and not resource.strip():
+            raise TypeError("Relationship resource type cannot be empty.")
+
+        if (
+                not isinstance(resource, (str, type))
+                and not callable(resource)
+        ):
+            raise TypeError(
+                "Relationship resource must be a resource type string, "
+                "a Resource class, or a zero-argument callable returning "
+                "one.",
+            )
+
+        self._resource_reference = resource
+        self.many = many
+        self.public_name_override = public_name
+        self.writable = writable
+        self.required = required
+        self.nullable = nullable
+
+        # Filled by ResourceMeta.
+        self.name: str | None = None
+
+    def resolve_resource(self) -> type["Resource"]:
+        """
+        Resolve and return the target Resource class.
+
+        A Resource class is callable too, so we distinguish a Resource
+        class from a deferred zero-argument callable explicitly.
+        """
+
+        from .base import Resource
+
+        resource = self._resource_reference
+
+        if isinstance(resource, str):
+            resolved = Resource.get_resource(resource)
+
+            if resolved is None:
+                raise LookupError(
+                    f"Relationship references unknown resource type "
+                    f"{resource!r}.",
+                )
+        elif isinstance(resource, type):
+            resolved = resource
+        else:
+            try:
+                resolved = resource()
+            except TypeError as exc:
+                raise TypeError(
+                    "Relationship resource callable must accept no "
+                    "arguments.",
+                ) from exc
+
+        if not isinstance(resolved, type) or not issubclass(
+                resolved,
+                Resource,
+        ):
+            raise TypeError(
+                "Relationship resource callable must return a "
+                "Resource class.",
+            )
+
+        return cast(
+            type["Resource"],
+            resolved,
+        )
+
+    @property
+    def resource(self) -> type["Resource"]:
+        """Return the validated target Resource class."""
+
+        return self.resolve_resource()
+
+    @property
+    def public_name(self) -> str:
+        """
+        Return the public JSON:API relationship name.
+        """
+
+        if self.public_name_override is not None:
+            return self.public_name_override
+
+        if self.name is None:
+            raise RuntimeError(
+                "Relationship has not been attached to a Resource.",
+            )
+
+        return self.name
