@@ -116,4 +116,6 @@ The package ships inline type annotations and a `py.typed` marker. CI checks
 the library and consumer examples with mypy, runs docstring examples, and
 executes the Python examples in this README and the user guides.
 
-Licensing has not yet been selected. Add a license before public distribution.
+## License
+
+Licensed under the [MIT License](LICENSE).

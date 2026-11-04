@@ -3,17 +3,18 @@
 [Documentation index](README.md) · [Validation checklist](validation.md)
 
 This checkout is alpha (`0.1.0` in package metadata) and is being prepared for
-its first public release. The repository currently has no selected license or
-project URLs in package metadata. These are release blockers, not defaults for
-contributors to invent.
+its first public release. The owner has selected the [MIT License](../LICENSE),
+which is declared in package metadata. Actual project URLs still need to be
+supplied before release; contributors must not invent them.
 
 ## Owner decisions
 
 Before the first release, the owner must:
 
 1. Confirm availability of the `jsonappy` distribution and repository names.
-2. Choose and authorize a license, add its text as `LICENSE`, and declare it
-   in package metadata. Do not add a license grant without the owner's direction.
+2. Confirm that the selected MIT license text and copyright notice are included
+   in release artifacts and match package metadata. License changes require
+   the owner's direction.
 3. Supply actual repository, issue tracker, and documentation URLs for
    `[project.urls]`; do not guess URLs.
 4. Approve the release version, author metadata, supported Python versions,

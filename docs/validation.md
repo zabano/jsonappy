@@ -28,11 +28,13 @@
   development environment is not evidence of core isolation.
 - Check the source distribution includes source modules, tests, scripts,
   documentation, `AGENTS.md`, and `pytest.ini`; check the wheel contains package
-  modules and `py.typed`.
+  modules and `py.typed`. Verify both artifacts include `LICENSE` and declare
+  the MIT license in their metadata.
 - Review the Python 3.12, 3.13, and 3.14 CI matrix and dependency bounds in
   [package metadata](../pyproject.toml). Run all CI jobs before release.
-- Resolve the owner decisions in [Publishing](publishing.md), including license,
-  real project URLs, release version, and explicit authorization to publish.
+- Verify the selected MIT license and resolve the remaining owner decisions in
+  [Publishing](publishing.md): real project URLs, release version, and explicit
+  authorization to publish.
 
 Package checks may download dependencies; test execution requires no external
 services. Passing this checklist does not establish full JSON:API conformance.

@@ -3,6 +3,8 @@ name = "jsonappy"
 version = "0.1.0"
 description = "Declarative JSON:API resources, query handling, and framework adapters for Python"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["jsonapi", "json-api", "resources", "fastapi", "sqlalchemy"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -74,5 +76,5 @@ warn_unused_ignores = true
 no_implicit_reexport = true
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
