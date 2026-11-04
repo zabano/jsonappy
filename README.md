@@ -2,7 +2,7 @@
 
 Declarative JSON:API resources, query handling, and framework adapters for Python.
 
-Requires Python 3.14 or later (below Python 4).
+Requires Python 3.12 or later (below Python 4).
 
 Define your public resources once, validate client query options, apply them
 to SQLAlchemy statements, and serialize objects into JSON:API documents.

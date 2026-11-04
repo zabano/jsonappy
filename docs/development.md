@@ -35,7 +35,6 @@ python -m pytest -q tests/query tests/test_resource.py
 Preserve layer boundaries described in `AGENTS.md`. Keep framework-specific
 changes in their adapter and update relevant examples and documentation.
 
-The minimum supported Python version is 3.14.
-Testing with an older interpreter is diagnostic and does not establish a
-supported version. Broaden the supported range only after validating a
-Python-version matrix.
+The minimum supported Python version is 3.12. CI runs the test suite,
+builds packages, and checks installed core imports on Python 3.12, 3.13,
+and 3.14. Keep this matrix current when adding supported Python versions.
