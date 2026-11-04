@@ -1,68 +1,156 @@
 # Framework adapters
 
-## SQLAlchemy
+[Documentation index](README.md) · Next: [Mutation validation](mutations.md)
 
-Install the `sqlalchemy` extra. Set the resource's `model` to its mapped class.
-The example assumes an application-defined mapped `Article` and matching
-`ArticleResource`:
+Install only the extras you use. `sqlalchemy` provides database translation;
+`pydantic` provides document models and serialization; `fastapi` includes
+Pydantic and adds HTTP helpers. `all` installs all three. Import adapters from
+`jsonappy.adapters.sqlalchemy`, `.pydantic`, and `.fastapi` respectively.
+
+## SQLAlchemy: declaration to query to document
+
+This example needs the `sqlalchemy` and `pydantic` extras (or `all`) and runs
+against in-memory SQLite:
 
 ```python
-from sqlalchemy import select
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from jsonappy import Resource, ResourceRegistry
+from jsonappy.resource import String
 from jsonappy.query import QuerySpec
-from jsonappy.adapters.sqlalchemy import build_sqlalchemy_query_from_spec
+from jsonappy.adapters.pydantic import serialize_collection
+from jsonappy.adapters.sqlalchemy import paginate_sqlalchemy_query
 
-spec = QuerySpec.parse(sort="-title", page_number=1, page_size=25)
-stmt = build_sqlalchemy_query_from_spec(
-    select(Article), ArticleResource, spec,
-)
-articles = session.scalars(stmt).unique().all()
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Article(Base):
+    __tablename__ = "articles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str]
+
+
+class ArticleResource(Resource):
+    registry = ResourceRegistry()
+    type = "articles"
+    model = Article
+    title = String(public_name="headline", sortable=True, filterable=True)
+
+
+engine = create_engine("sqlite://")
+Base.metadata.create_all(engine)
+spec = QuerySpec.parse(sort="headline", page_number=1, page_size=25)
+with Session(engine) as session:
+    session.add(Article(id=1, title="Hello"))
+    session.commit()
+    # Add application access restrictions to the base SELECT here.
+    stmt, pagination = paginate_sqlalchemy_query(
+        session, select(Article), ArticleResource, spec,
+    )
+    articles = session.scalars(stmt).unique().all()
+    document = serialize_collection(
+        articles, ArticleResource, include=spec.include, fieldsets=spec.fieldsets,
+    )
+    assert pagination.total == 1
+    assert document.to_payload()["data"][0]["attributes"] == {"headline": "Hello"}
+engine.dispose()
 ```
 
-Begin with a statement that already restricts rows according to application
-permissions. The adapter adds client-selected options; it does not authorize
-access. Pagination helpers use synchronous SQLAlchemy session operations.
+`build_sqlalchemy_query_from_spec(stmt, resource, spec, paginate=True)` builds a
+SELECT without executing or counting. `paginate_sqlalchemy_query()` additionally
+runs a synchronous count and returns `(Select, PaginationMeta)`; execute the
+SELECT yourself. For async sessions, use the statement builder and execute/count
+through application async operations.
 
-## Pydantic serialization
+The lower-level pipeline is `resolve_sqlalchemy_query()` followed by
+`apply_sqlalchemy_query()`, or `build_sqlalchemy_query()` with individual parsed
+components. These helpers apply required relationship joins, filtering, root
+fieldsets, include loaders, sorting, and finally pagination. Translation errors
+from the combined builder raise `SQLAlchemyQueryError`, a `ValueError` subclass.
+This exception is not automatically translated by FastAPI handlers; applications
+must map client-query failures to an appropriate HTTP error.
 
-Install the `pydantic` extra. `serialize_resource` produces one resource object;
-`serialize_document` and `serialize_collection` produce top-level documents.
-They accept sparse fieldsets and context; document helpers also accept includes,
-links, and metadata. `to_payload()` converts supported Python values to
-JSON-compatible values while retaining required null linkage.
+The base SELECT must already implement access restrictions. SQLAlchemy mapping
+attributes must match Python declaration names, independently of public names.
+Counts reflect rows; custom joins must preserve resource cardinality. Includes
+use `selectinload`; fieldsets preserve primary keys. Arrange additional loading
+for selected linkage and computed dependencies before
+[serialization](serialization.md#loading-and-failures).
 
-Relationship identifiers are included in `relationships`. Requested related
-objects are emitted separately in `included`, deduplicated by resource identity.
-ORM callers must arrange appropriate loading before serialization; computed
-field dependencies may require additional application-specific loader options.
+## Pydantic
 
-## FastAPI
+`serialize_resource()` returns a resource object; `serialize_document()` and
+`serialize_collection()` return top-level documents. Use `.to_payload()` for
+JSON-compatible dictionaries. See [Serialization](serialization.md) for complete
+examples, includes, fieldsets, context, and null linkage.
 
-Install the `fastapi` extra, which also installs Pydantic.
+`JSONAPIRequestDocument` and `validate_request_document()` validate mutation
+input without requiring FastAPI. See [Mutation validation](mutations.md) for the
+resolved return value and application handoff.
 
-- `JSONAPIQuery` parses query parameters as a dependency.
-- `resource_response` and `collection_response` serialize data with the media
-  type `application/vnd.api+json`.
-- `resource_request(ResourceClass, operation="create")` validates mutation
-  input. For updates, set `operation="update"` and `id_parameter` to the route's
-  identifier parameter.
-- `install_jsonapi_exception_handlers(app)` installs JSON:API handlers for this
-  adapter's HTTP exceptions and FastAPI request-validation errors.
-- `jsonapi_fieldset_openapi` and `jsonapi_error_responses` generate reusable
-  OpenAPI declarations. Routes remain the application's responsibility.
+## FastAPI responses and query handling
 
-Mutation validation checks public field names, writability, required create
-values, nullability, value types, resource type/ID consistency, relationship
-types, and to-one/to-many cardinality. It returns a `ValidatedResourceRequest`
-whose dictionary keys are Python declaration names.
+The [README quickstart](../README.md#add-fastapi-endpoints) constructs a GET route.
+`JSONAPIQuery` is an annotated dependency returning `QuerySpec`; it parses syntax
+and checks Accept, but cannot validate resource-specific filter/sort capabilities.
+Pass the spec to your data query builder, then pass the fetched objects to the
+response helper.
 
-It does not check whether linked identifiers exist or whether the caller has
-permission to use them. Your application must perform those lookups and enforce
-business rules before writing. `validate_response_query` can check response
-fieldsets/includes before a mutation has side effects.
+`resource_response(obj, resource, query=spec)` returns a single resource document
+(or null data). `collection_response(objects, resource, query=spec)` returns a
+data array. Both return `JSONAPIResponse` with `application/vnd.api+json`, apply
+includes/fieldsets, and accept `context`, `links`, `meta`, `status_code`, and
+`headers`. They do not filter, sort, or slice supplied objects.
 
-The exception handlers apply globally to FastAPI validation errors
-when installed. Account for this when mixing JSON:API and unrelated routes.
+Pass `pagination=PaginationMeta(...)` to `collection_response()` to add:
 
-To-many mutation relationships require an array of resource identifiers.
-Use `{"data": []}` to clear a to-many relationship; `{"data": null}` is valid
-only for a nullable to-one relationship.
+```json
+{"meta": {"page": {"total": 1, "number": 1, "size": 25, "pages": 1}}}
+```
+
+This overrides a supplied `meta.page` but preserves other metadata. Pagination
+links are application-supplied via `links`; helpers do not generate URLs.
+`resource_response(None, ...)` produces null data with the requested status;
+raise `JSONAPIHTTPException` explicitly for a missing-resource 404.
+
+## Errors and media types
+
+Call `install_jsonapi_exception_handlers(app)` once. It installs handlers for
+`JSONAPIHTTPException` and FastAPI `RequestValidationError`. The latter applies
+globally, including routes unrelated to JSON:API. Ordinary `HTTPException`,
+SQLAlchemy query errors, and `SerializationError` are not converted by these
+handlers. Use `error_response(*errors, status_code=...)` for explicit error
+responses, or raise `JSONAPIHTTPException` with `title`, `detail`, and optional
+`code`, `source`, and `headers`.
+
+| Condition | Adapter response |
+| --- | --- |
+| Malformed query syntax, invalid response includes/fieldsets | 400 |
+| Incompatible Accept | 406 |
+| Mutation Content-Type other than `application/vnd.api+json` | 415 |
+| FastAPI structural request validation | 422 |
+| Mutation semantic failure | 400, 409, or 422 depending on failure |
+
+Mutation dependencies check Content-Type and Accept. `JSONAPIQuery` checks
+Accept; response helpers alone do not negotiate request headers. Use
+`Depends(require_jsonapi_accept)` or `JSONAPIAccept` for routes without the query
+or mutation dependency. Missing Accept and `*/*` are accepted. Checks are basic:
+quality values, full wildcard negotiation, and JSON:API extension/profile
+negotiation are not implemented. Framework body parsing may fail before semantic
+mutation validation, so malformed bodies can produce 422 before media checks.
+
+## OpenAPI and routes
+
+Declare `response_class=JSONAPIResponse` on JSON:API routes so FastAPI documents
+the response media type. Use `JSONAPIEmptyResponse` for bodyless routes when
+appropriate. `jsonapi_fieldset_openapi(*resources)` supplies `openapi_extra`
+parameters; `jsonapi_error_responses(*status_codes)` supplies `responses` entries.
+`COMMON_JSONAPI_ERROR_RESPONSES` provides the common statuses. These declarations
+help describe routes; they do not install runtime behavior or generate a complete
+resource-specific request/response schema. Explicitly document application filter
+parameters and resource schemas as needed.
+
+Applications define routes, sessions, transactions, authorization, persistence,
+and relationship endpoints. The library does not generate CRUD operations.

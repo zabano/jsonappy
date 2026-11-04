@@ -111,6 +111,7 @@ def check_installation(artifacts: Path, distribution: str, extra: str) -> None:
                 shutil.copy2(source, destination)
         if "fastapi" in PROFILES[extra]:
             shutil.copy2(checkout / "README.md", work / "README.md")
+            shutil.copytree(checkout / "docs", work / "docs")
 
         # Do not copy the checkout's pytest.ini: its pythonpath points at src.
         config = work / "pytest.ini"

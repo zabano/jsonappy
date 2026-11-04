@@ -1,23 +1,47 @@
 # Preparing a public release
 
-This project is being prepared for its first public release.
+[Documentation index](README.md) · [Validation checklist](validation.md)
 
-Before the first release:
+This checkout is alpha (`0.1.0` in package metadata) and is being prepared for
+its first public release. The repository currently has no selected license or
+project URLs in package metadata. These are release blockers, not defaults for
+contributors to invent.
 
-1. Confirm availability of the `jsonappy` distribution and repository names
-   before publishing.
-2. Choose a license, add its text as `LICENSE`, and declare it in package
-   metadata.
-3. Add the actual repository, issue tracker, and documentation URLs to
-   `[project.urls]`; do not use guessed URLs.
-4. Review version, author metadata, README, supported Python versions, and
-   dependency bounds. Run the full test suite and package checks.
-5. Build wheel and source distribution and test installation in a clean
-   environment. Check both core-only and adapter installations.
-6. Configure a release workflow or upload to TestPyPI using your account,
-   verify the release, then publish to PyPI when ready.
+## Owner decisions
+
+Before the first release, the owner must:
+
+1. Confirm availability of the `jsonappy` distribution and repository names.
+2. Choose and authorize a license, add its text as `LICENSE`, and declare it
+   in package metadata. Do not add a license grant without the owner's direction.
+3. Supply actual repository, issue tracker, and documentation URLs for
+   `[project.urls]`; do not guess URLs.
+4. Approve the release version, author metadata, supported Python versions,
+   dependency bounds, and public API scope.
+5. Explicitly authorize publication. Building or reviewing the package does
+   not authorize a public release.
+
+## Verify release artifacts
+
+Follow [Development](development.md) and complete the [validation checklist](validation.md).
+Build a wheel and source distribution with no stale versions in the output
+directory, run `twine check`, and test both artifacts outside the checkout with
+all five installation profiles. Inspect packaged documentation and verify that
+installation commands, API names, and dependency bounds match the artifacts.
+
+The current CI workflow tests and builds packages; it does not publish them.
+After the owner's decisions and artifact verification, configure an approved
+release workflow or upload to TestPyPI with the owner's account. Verify the
+TestPyPI installation and metadata before the owner-authorized PyPI release.
+Keep credentials and deployment configuration out of this library.
+
+After publication, update checkout-only installation guidance and status claims
+in the README and documentation index to reflect the actual available release.
+
+## Conformance claims
 
 The FastAPI header checks provide basic media-type handling. They do not
 implement complete Accept quality negotiation or JSON:API extension/profile
 negotiation. Do not advertise full JSON:API conformance without a separate
-specification audit.
+specification audit. See [Architecture](architecture.md#scope-and-current-limitations)
+for the current integration scope.

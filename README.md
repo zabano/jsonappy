@@ -17,9 +17,19 @@ Until the first public release, install from this checkout:
 python -m pip install -e '.[all]'
 ```
 
-Install only what your application uses with the `pydantic`, `fastapi`, or
-`sqlalchemy` extra. A plain installation provides the core resource and query
-layers. Adapter imports require their corresponding extras.
+Choose extras explicitly from the checkout:
+
+| Install command | Provides |
+| --- | --- |
+| `python -m pip install -e .` | Dependency-free resources and queries |
+| `python -m pip install -e '.[pydantic]'` | Document serialization and mutation validation |
+| `python -m pip install -e '.[fastapi]'` | FastAPI helpers and Pydantic |
+| `python -m pip install -e '.[sqlalchemy]'` | SQLAlchemy query translation |
+| `python -m pip install -e '.[all]'` | All adapters |
+
+Extras can be combined, for example `'.[pydantic,sqlalchemy]'`. Adapter imports
+require their corresponding extras. See [package metadata](pyproject.toml) for
+exact dependency bounds. The project is alpha; public APIs may change.
 
 ## Define and serialize a resource
 
@@ -57,6 +67,7 @@ assert document.to_payload() == {
 from fastapi import FastAPI
 from jsonappy.adapters.fastapi import (
     JSONAPIQuery,
+    JSONAPIResponse,
     collection_response,
     install_jsonapi_exception_handlers,
 )
@@ -65,7 +76,7 @@ app = FastAPI()
 install_jsonapi_exception_handlers(app)
 
 
-@app.get("/articles")
+@app.get("/articles", response_class=JSONAPIResponse)
 def articles(query: JSONAPIQuery):
     return collection_response(
         [Article(1, "Hello")], ArticleResource, query=query,
@@ -78,13 +89,16 @@ in-memory list. See the [adapter guide](docs/adapters.md).
 
 ## Documentation
 
-- [Resources and field options](docs/resources.md)
-- [Query parameters and filtering](docs/queries.md)
-- [Framework adapters and mutation validation](docs/adapters.md)
-- [Architecture and application responsibilities](docs/architecture.md)
+Start with the [documentation index](docs/README.md) for the reading order.
+
+- [Resources, public names, and relationships](docs/resources.md)
+- [Query parsing, filtering, and pagination](docs/queries.md)
+- [Serialization, linkage, and includes](docs/serialization.md)
+- [SQLAlchemy and FastAPI integration](docs/adapters.md)
+- [Create/update validation](docs/mutations.md)
+- [Architecture and current limitations](docs/architecture.md)
 - [Development and PyCharm setup](docs/development.md)
-- [Public release preparation](docs/publishing.md)
-- [Validation checklist](docs/validation.md)
+- [Validation checklist](docs/validation.md) and [release preparation](docs/publishing.md)
 
 ## Development
 
@@ -100,6 +114,6 @@ python -m twine check dist/*
 
 The package ships inline type annotations and a `py.typed` marker. CI checks
 the library and consumer examples with mypy, runs docstring examples, and
-executes the Python examples in this README.
+executes the Python examples in this README and the user guides.
 
 Licensing has not yet been selected. Add a license before public distribution.
