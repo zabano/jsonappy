@@ -63,8 +63,12 @@ changes in their adapter and update relevant examples and documentation.
 The minimum supported Python version is 3.12. CI runs the test suite,
 builds packages, and checks installed core imports on Python 3.12, 3.13,
 and 3.14. Keep this matrix current when adding supported Python versions.
-The workflow skips pushes and pull requests whose changed files are all `.md`
-files. Run documentation example checks locally for Markdown-only changes.
+The test and packaging workflow skips pushes and pull requests whose changed
+files are all `.md` files. A separate Documentation workflow builds the site on
+every push and pull request, including Markdown-only changes. Run executable
+example checks locally for Markdown-only changes; a site build checks rendering
+and links, not Python execution. See [Documentation site](hosting.md) for preview
+commands and Read the Docs setup.
 
 ## Documentation examples and typing
 

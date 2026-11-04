@@ -25,6 +25,7 @@ POSIX shell unless stated otherwise. Examples use local data and SQLite.
 
 - [Changelog](../CHANGELOG.md): notable changes and upcoming release notes.
 - [Development](development.md): environments, PyCharm, tests, typing, and package checks.
+- [Documentation site](hosting.md): local preview, build checks, and Read the Docs setup.
 - [Validation checklist](validation.md): checks to complete before merging or releasing.
 - [Publishing](publishing.md): owner decisions and release preparation.
 

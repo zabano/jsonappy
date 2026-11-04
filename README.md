@@ -99,6 +99,7 @@ See the [changelog](CHANGELOG.md) for notable changes.
 - [Create/update validation](docs/mutations.md)
 - [Architecture and current limitations](docs/architecture.md)
 - [Development and PyCharm setup](docs/development.md)
+- [Documentation site setup and preview](docs/hosting.md)
 - [Validation checklist](docs/validation.md) and [release preparation](docs/publishing.md)
 
 ## Development

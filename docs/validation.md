@@ -10,6 +10,8 @@
   docstrings, README examples, and user-guide examples. Tests must use local
   fixtures and SQLite without external services, credentials, or secrets.
 - Run `python -m mypy` for library annotations and typed consumer examples.
+- Run `python -m mkdocs build --strict --config-file docs/site/mkdocs.yml` in the documentation environment to
+  check navigation and internal links; see [Documentation site](hosting.md).
 - Check changed public names, relationship paths, field capabilities, linkage,
   includes, sparse fieldsets, and mutation semantics against the relevant tests.
 - Update the owning guide and index links for public API changes. Keep examples

@@ -60,6 +60,7 @@ packages = [
     {include = "jsonappy", from = "src"},
 ]
 include = [
+    {path = ".readthedocs.yaml", format = ["sdist"]},
     {path = "CHANGELOG.md", format = ["sdist"]},
     {path = "docs", format = ["sdist"]},
     {path = "tests", format = ["sdist"]},

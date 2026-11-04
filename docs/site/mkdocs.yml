@@ -1,0 +1,57 @@
+site_name: jsonappy
+site_description: Declarative JSON:API resources, query handling, and framework adapters for Python.
+site_url: !ENV [READTHEDOCS_CANONICAL_URL, '']
+repo_url: https://github.com/zabano/jsonappy
+edit_uri: ''
+strict: true
+docs_dir: ..
+site_dir: ../../site
+
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - python
+    - bash
+    - json
+    - yaml
+
+plugins:
+  - search
+
+hooks:
+  - hooks.py
+
+exclude_docs: |
+  site/
+
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    not_found: warn
+    anchors: warn
+    unrecognized_links: warn
+
+markdown_extensions:
+  - admonition
+  - fenced_code
+  - tables
+
+nav:
+  - Overview: README.md
+  - Quickstart: quickstart.md
+  - User guide:
+      - Architecture: architecture.md
+      - Resources: resources.md
+      - Queries: queries.md
+      - Serialization: serialization.md
+      - Adapters: adapters.md
+      - Mutation validation: mutations.md
+  - Contributing:
+      - Development: development.md
+      - Documentation site: hosting.md
+      - Validation checklist: validation.md
+      - Publishing: publishing.md
+  - Changelog: changelog.md
+  - License: license.md

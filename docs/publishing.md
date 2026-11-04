@@ -6,6 +6,8 @@ This checkout is alpha (`0.1.0` in package metadata) and is being prepared for
 its first public release. The owner has selected the [MIT License](../LICENSE),
 which is declared in package metadata. Actual project URLs still need to be
 supplied before release; contributors must not invent them.
+The GitHub repository is linked in the site configuration; verify the assigned
+documentation URL after completing [Read the Docs setup](hosting.md#connect-read-the-docs).
 
 ## Owner decisions
 

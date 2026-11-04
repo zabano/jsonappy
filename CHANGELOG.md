@@ -25,6 +25,8 @@ The first public release is in preparation; no release date has been assigned.
   responses, error handlers, media-type checks, and OpenAPI helpers.
 - Inline type annotations, a `py.typed` marker, and executable documentation examples.
 - User guides for resources, queries, serialization, adapters, and mutation validation.
+- Searchable MkDocs documentation site, Read the Docs configuration, and a
+  separate documentation build check that includes Markdown-only changes.
 - CI coverage for Python 3.12, 3.13, and 3.14, including isolated wheel and source
   distribution checks for the core and optional adapters.
 - MIT license.
