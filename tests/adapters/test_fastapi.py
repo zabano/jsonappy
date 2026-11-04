@@ -162,3 +162,54 @@ def test_sparse_fieldset_is_documented_with_jsonapi_parameter_name():
 
     assert fieldset["in"] == "query"
     assert "name" in fieldset["description"]
+
+
+def test_decimal_fastapi_request_and_response_preserve_exact_string():
+    from typing import Annotated
+    from decimal import Decimal as DecimalValue
+    from jsonapy.resource import Decimal
+
+    @dataclass
+    class Product:
+        id: int
+        unit_price: DecimalValue
+
+    class ProductResource(Resource):
+        registry = ResourceRegistry()
+        type = "decimal-products"
+        unit_price = Decimal(public_name="unitPrice", required=True)
+
+    from fastapi import Depends, FastAPI
+    from fastapi.testclient import TestClient
+    from jsonapy.adapters.fastapi import (
+        JSONAPI_MEDIA_TYPE,
+        install_jsonapi_exception_handlers,
+        resource_request,
+        resource_response,
+    )
+    from jsonapy.adapters.pydantic import ValidatedResourceRequest
+
+    app = FastAPI()
+    install_jsonapi_exception_handlers(app)
+    dependency = resource_request(ProductResource, operation="create")
+
+    @app.post("/products")
+    def create_product(values: Annotated[ValidatedResourceRequest, Depends(dependency)]):
+        assert isinstance(values.attributes["unit_price"], DecimalValue)
+        return resource_response(Product(1, values.attributes["unit_price"]), ProductResource)
+
+    exact = "12345678901234567890.12345678901234567890"
+    with TestClient(app) as client:
+        response = client.post("/products", headers={"Content-Type": JSONAPI_MEDIA_TYPE}, json={
+            "data": {"type": "decimal-products", "attributes": {"unitPrice": exact}},
+        })
+        assert response.status_code == 200
+        assert response.headers["content-type"] == JSONAPI_MEDIA_TYPE
+        assert response.json()["data"]["attributes"]["unitPrice"] == exact
+
+        response = client.post("/products", headers={"Content-Type": JSONAPI_MEDIA_TYPE}, json={
+            "data": {"type": "decimal-products", "attributes": {"unitPrice": "NaN"}},
+        })
+        assert response.status_code == 422
+        error = response.json()["errors"][0]
+        assert error["source"]["pointer"] == "/data/attributes/unitPrice"

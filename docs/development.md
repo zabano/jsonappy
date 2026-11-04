@@ -62,9 +62,10 @@ blocks in order and checks the documented FastAPI endpoint. Keep those
 blocks executable, including any assertions.
 
 The package includes a `py.typed` marker so type checkers can use its inline
-annotations after installation. `python -m mypy` checks all library modules
-and consumer examples in `tests/typing`. It uses Python 3.12 as the language
-baseline, and runs in every supported Python version's CI job. Mypy is a
+annotations after installation. `python -m mypy` checks all library modules,
+the installation checker, and consumer examples in `tests/typing`. It uses
+Python 3.12 as the language baseline and runs in every supported Python
+version's CI job. Mypy is a
 development dependency; using the library adds no typing runtime dependency.
 
 Give each module a top-level docstring describing its role, entry points,
@@ -74,3 +75,19 @@ When documenting public APIs, describe defaults, return values, exceptions,
 and responsibilities that the caller retains. Use executable `>>>` examples
 for small core operations. Use the test suite for examples needing adapters
 or application setup.
+
+## Isolated installation checks
+
+CI installs both the wheel and source distribution with each profile: `core`,
+`pydantic`, `fastapi`, `sqlalchemy`, and `all`, on Python 3.12, 3.13, and 3.14.
+Each check creates a fresh environment, copies relevant tests outside the
+checkout, and runs them against the installed package. It also checks package
+requirements, the typing marker, and the absence of unselected frameworks.
+Test tooling adds only pytest and, for HTTP profiles, httpx.
+
+After building, run a profile locally with:
+
+```bash
+python scripts/check_installation.py --extra pydantic --distribution wheel
+python scripts/check_installation.py --extra core --distribution sdist
+```

@@ -19,9 +19,33 @@ jobs:
       - run: python -m mypy
       - run: python -m build
       - run: python -m twine check dist/*
-      - name: Test installed wheel and dependency-free core
-        run: |
-          python -m venv /tmp/jsonapy-core
-          /tmp/jsonapy-core/bin/python -m pip install --no-deps dist/*.whl
-          cd /tmp
-          /tmp/jsonapy-core/bin/python -I -c "from importlib.resources import files; from jsonapy import Resource; from jsonapy.query import QuerySpec; assert files('jsonapy').joinpath('py.typed').is_file(); print(QuerySpec())"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.python-version }}
+          path: dist/*
+          if-no-files-found: error
+
+  installed:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+        distribution: [wheel, sdist]
+        extra: [core, pydantic, fastapi, sqlalchemy, all]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages-${{ matrix.python-version }}
+          path: ${{ runner.temp }}/packages
+      - name: Verify isolated installation and relevant tests
+        run: >-
+          python scripts/check_installation.py
+          --artifacts "${{ runner.temp }}/packages"
+          --distribution "${{ matrix.distribution }}"
+          --extra "${{ matrix.extra }}"
