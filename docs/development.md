@@ -123,6 +123,11 @@ use only local fixtures and SQLite.
 
 ## Maintaining documentation
 
+Record notable user-facing changes in [CHANGELOG.md](../CHANGELOG.md) under
+`Unreleased`. Follow Keep a Changelog categories: `Added`, `Changed`, `Deprecated`,
+`Removed`, `Fixed`, and `Security`; omit empty categories. Summarize the impact
+on users rather than copying commit messages.
+
 [The index](README.md) owns the reading order; keep the root README focused on
 installation and the quickstart. Put declarations in the resource guide, query
 syntax in queries, output behavior in serialization, HTTP/database integration

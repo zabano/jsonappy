@@ -24,6 +24,13 @@ Before the first release, the owner must:
 
 ## Verify release artifacts
 
+For an approved release, move the `Unreleased` entries in
+[CHANGELOG.md](../CHANGELOG.md) into a section headed
+`## [X.Y.Z] - YYYY-MM-DD`, using the approved version and actual release date.
+Keep an `Unreleased` section above it for subsequent changes. Use newest-first
+ordering and add release/compare links once the actual repository URLs and tags
+are available.
+
 Follow [Development](development.md) and complete the [validation checklist](validation.md).
 Build a wheel and source distribution with no stale versions in the output
 directory, run `twine check`, and test both artifacts outside the checkout with

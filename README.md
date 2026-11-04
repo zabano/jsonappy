@@ -90,6 +90,7 @@ in-memory list. See the [adapter guide](docs/adapters.md).
 ## Documentation
 
 Start with the [documentation index](docs/README.md) for the reading order.
+See the [changelog](CHANGELOG.md) for notable changes.
 
 - [Resources, public names, and relationships](docs/resources.md)
 - [Query parsing, filtering, and pagination](docs/queries.md)
