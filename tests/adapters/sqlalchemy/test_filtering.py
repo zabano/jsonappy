@@ -15,6 +15,53 @@ def test_coerces_integer_filter_and_applies_expression(article_types):
     assert "articles.rank = 7" in str(compiled)
 
 
+def test_decimal_filter_bindings_preserve_precision_for_all_supported_operations():
+    from decimal import Decimal as DecimalValue
+    from sqlalchemy import Numeric
+    from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+    from jsonapy.resource import Decimal, MultiValueFilter, RangeFilter, Resource
+
+    class Base(DeclarativeBase):
+        pass
+
+    class Product(Base):
+        __tablename__ = "decimal_filter_products"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        unit_price: Mapped[DecimalValue] = mapped_column(Numeric(40, 20))
+
+    class ProductResource(Resource):
+        type = "decimal-filter-products"
+        register = False
+        model = Product
+        unit_price = Decimal(filterable=True)
+
+    class ProductMembershipResource(ProductResource):
+        register = False
+        unit_price = Decimal(filterable=MultiValueFilter())
+
+    class ProductRangeResource(ProductResource):
+        register = False
+        unit_price = Decimal(filterable=RangeFilter())
+
+    exact = "12345678901234567890.12345678901234567890"
+    for resource, value, expected in [
+        (ProductResource, exact, [DecimalValue(exact)]),
+        (ProductMembershipResource, f"{exact},19.9900", [DecimalValue(exact), DecimalValue("19.9900")]),
+        (ProductRangeResource, f"{exact}:", [DecimalValue(exact)]),
+    ]:
+        resolved = resolve_sqlalchemy_filter_spec(resource, FilterSpec("unit_price", value))
+        # SQLite Numeric storage uses floats, so verify exact bound values
+        # before a database driver can impose its own precision limits.
+        parameters = list(select(Product).where(resolved.expression).compile().params.values())
+        decimals = [
+            item
+            for parameter in parameters
+            for item in (parameter if isinstance(parameter, (tuple, list)) else [parameter])
+        ]
+        assert all(isinstance(item, DecimalValue) for item in decimals)
+        assert [item.as_tuple() for item in decimals] == [item.as_tuple() for item in expected]
+
+
 def test_datetime_range_executes_with_timestamp_boundaries():
     from datetime import datetime
     from sqlalchemy import DateTime, create_engine

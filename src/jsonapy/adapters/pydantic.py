@@ -10,6 +10,7 @@ output. Callers supply accessible objects and manage persistence and sessions.
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from enum import Enum
 from typing import Any, Literal
 from uuid import UUID
@@ -148,8 +149,8 @@ class ValidatedResourceRequest:
 
     ``id`` is the client identifier, or None on a create without an id.
     ``attributes`` contains validated values, including converted dates,
-    UUIDs, and enums. ``relationships`` retains linkage objects containing
-    public resource types and string ids. Applications resolve and authorize
+    decimals, UUIDs, and enums. ``relationships`` retains linkage objects
+    containing public resource types and string ids. Applications resolve and authorize
     those identifiers; this result does not contain persisted objects.
     """
 
@@ -160,6 +161,20 @@ class ValidatedResourceRequest:
 
 def _pointer_part(value: str) -> str:
     return value.replace("~", "~0").replace("/", "~1")
+
+
+def _decimal_value(value: Any) -> Decimal:
+    """Normalize supported numeric input without passing through a float."""
+    if isinstance(value, bool) or not isinstance(value, (str, int, float, Decimal)):
+        raise ValueError("Expected a decimal string or number.")
+    try:
+        # Floats have already been decoded; avoid adding binary artifacts.
+        converted = Decimal(str(value)) if isinstance(value, float) else Decimal(value)
+    except InvalidOperation as exc:
+        raise ValueError("Expected a valid decimal value.") from exc
+    if not converted.is_finite():
+        raise ValueError("Decimal values must be finite.")
+    return converted
 
 
 def _request_value(field: Field, value: Any, pointer: str) -> Any:
@@ -187,6 +202,8 @@ def _request_value(field: Field, value: Any, pointer: str) -> Any:
         return float(value)
 
     try:
+        if expected is Decimal:
+            return _decimal_value(value)
         if isinstance(expected, type) and issubclass(expected, Enum):
             return expected(value)
         if expected is UUID and isinstance(value, str):
@@ -225,7 +242,9 @@ def validate_request_document(
 
     Returns:
         Validated attributes and linkage keyed by Python declaration names.
-        Attribute values are converted according to field types.
+        Attribute values are converted according to field types. Decimal
+        fields return finite decimal.Decimal values; decimal strings preserve
+        exact input, while floats use their already-decoded string value.
 
     Raises:
         ResourceRequestError: Invalid values, unknown or read-only members,
@@ -482,6 +501,15 @@ class _DocumentSerializer:
                         f"attribute {field.name!r}.",
                     ) from exc
 
+            if field.python_type is Decimal and value is not None:
+                try:
+                    value = _decimal_value(value)
+                except ValueError as exc:
+                    raise SerializationError(
+                        f"Decimal field {public_name!r} on Resource "
+                        f"{resource.__name__!r} must resolve to a finite decimal.",
+                    ) from exc
+
             attributes[public_name] = value
 
             if value is None and not field.options.nullable:
@@ -682,7 +710,8 @@ def serialize_document(
 
     Returns:
         A JSONAPIDocument; ``to_payload()`` converts it to JSON-compatible
-        values. Includes are deduplicated by type and id while traversing
+        values, with decimal attributes encoded as strings preserving digits
+        and scale. Includes are deduplicated by type and id while traversing
         every requested path, including paths omitted by sparse fieldsets.
 
     Raises:

@@ -20,8 +20,12 @@ Field options:
 
 `ComputedField(getter)` is read-only. Its getter receives `(object, context)`.
 `JSON` accepts arbitrary JSON-compatible values and has no portable filtering
-capability. The current `Decimal` field uses `float` as its Python type;
-do not assume decimal-preserving request conversion.
+capability.
+
+`Decimal` uses Python's `decimal.Decimal` and serializes as a JSON string.
+Send strings such as `"19.9900"` to preserve exact precision and trailing zeros.
+
+## Relationships and identifiers
 
 `Relationship(TargetResource)` declares a to-one relationship; pass
 `many=True` for to-many. Targets can be resource classes, registered type

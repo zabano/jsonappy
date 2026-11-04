@@ -8,6 +8,7 @@ declarations do not import framework validators or database models.
 
 from enum import Enum
 from datetime import date, datetime
+from decimal import Decimal as DecimalValue
 from uuid import UUID as UUIDValue
 from collections.abc import Callable, Mapping
 from typing import Any, ClassVar
@@ -188,11 +189,19 @@ class Number(Field):
 
 
 class Decimal(Field):
-    """
-    Decimal-valued resource field.
+    """Finite decimal attribute preserving decimal digits and scale.
+
+    Mutation validation returns ``decimal.Decimal``. Decimal strings provide
+    exact input; integers are exact and finite floats use their string value.
+    Serialization emits JSON strings, preserving precision and trailing zeros
+    without rounding or quantization. Applications enforce scale and bounds.
+
+    Examples:
+        >>> Decimal.python_type("12345678901234567890.123400")
+        Decimal('12345678901234567890.123400')
     """
 
-    python_type = float
+    python_type = DecimalValue
 
     supported_filters = (
         Filter,
