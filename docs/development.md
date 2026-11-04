@@ -9,6 +9,19 @@ the test runner with this directory as the working directory.
 
 No machine-specific `.idea` files or interpreter paths are required or shared.
 
+Alternatively, use a Poetry environment with Python 3.12 or later:
+
+```bash
+poetry env use python3.12
+poetry install
+poetry run python -m pytest -q
+```
+
+Select that existing Poetry environment as the project interpreter in PyCharm.
+The default Poetry installation includes the `dev` dependency group, so the IDE
+can detect the development packages without selecting optional extras. The
+`.[dev]` extra remains available for pip installations.
+
 ## Install, test, and build
 
 ```bash

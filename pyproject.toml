@@ -40,6 +40,17 @@ dev = [
     "twine>=6,<8",
 ]
 
+[dependency-groups]
+dev = [
+    "fastapi>=0.115,<1",
+    "pydantic>=2.13.4,<3",
+    "sqlalchemy>=2.0.51,<3",
+    "pytest>=9.1.1,<10",
+    "httpx>=0.27,<1",
+    "build>=1.2,<2",
+    "twine>=6,<8",
+]
+
 [tool.poetry]
 packages = [
     {include = "jsonapy", from = "src"},
