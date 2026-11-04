@@ -394,16 +394,20 @@ def _parse_range(
     Range syntax:
 
         100:200
+        2026-01-01T10:00:00..2026-01-02T10:00:00
 
+    Use ``..`` when boundaries contain colons, such as ISO timestamps.
     Either boundary may be omitted, but not both.
     """
 
-    parts = value.split(":")
+    # The alternative separator leaves colons inside ISO timestamps intact.
+    separator = ".." if ".." in value else ":"
+    parts = value.split(separator)
 
     if len(parts) != 2:
         raise FilterResolutionError(
             f"Invalid range value {value!r}. "
-            "Expected '<start>:<end>'.",
+            "Expected '<start>:<end>' or '<start>..<end>'.",
         )
 
     start, end = (

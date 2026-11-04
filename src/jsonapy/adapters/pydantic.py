@@ -252,7 +252,7 @@ def validate_request_document(
                 code="null-not-allowed",
                 status_code=422,
             )
-        if relationship.many and linkage is not None and not isinstance(linkage, list):
+        if relationship.many and not isinstance(linkage, list):
             raise ResourceRequestError(
                 f"Relationship {public_name!r} requires an array of identifiers.",
                 pointer=f"{pointer}/data",
@@ -381,6 +381,7 @@ class _DocumentSerializer:
         self.include_paths = tuple(spec.parts for spec in includes)
         self.fieldsets = fieldsets
         self.context = context or {}
+        self.processed_includes: dict[tuple[str, str], set[tuple[str, ...]]] = {}
         self.primary: set[tuple[str, str]] = set()
         self.included: dict[tuple[str, str], ResourceObject | None] = {}
 
@@ -498,7 +499,32 @@ class _DocumentSerializer:
     ) -> None:
         _, key = self.identifier_key(obj, resource)
 
+        processed = self.processed_includes.setdefault(key, set())
+        pending = tuple(path for path in include_paths if path and path not in processed)
+        processed.update(pending)
+
         if key in self.primary or key in self.included:
+            # Identity deduplication must still traverse newly requested paths.
+            for relationship in resource.relationships().values():
+                child_paths = tuple(
+                    path[1:] for path in pending
+                    if path[0] == relationship.public_name
+                )
+                if not child_paths:
+                    continue
+                try:
+                    value = getattr(obj, relationship.name)
+                except AttributeError as exc:
+                    raise SerializationError(
+                        f"Object for Resource {resource.__name__!r} has no "
+                        f"relationship attribute {relationship.name!r}.",
+                    ) from exc
+                target = relationship.resolve_resource()
+                related = ([] if value is None else value) if relationship.many else (
+                    [] if value is None else [value]
+                )
+                for item in related:
+                    self.add_included(item, target, child_paths)
             return
 
         # Reserve before recursion to break relationship cycles.

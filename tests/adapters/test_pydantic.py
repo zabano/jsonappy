@@ -252,3 +252,53 @@ def test_create_requires_declaratively_required_members():
 
     assert caught.value.code == "required-field"
     assert caught.value.pointer == "/data/attributes/firstName"
+
+
+@pytest.mark.parametrize('sparse', [False, True])
+@pytest.mark.parametrize('include', [
+    'manager.manager,reports.reports', 'reports.reports,manager.manager',
+])
+def test_shared_included_resource_traverses_all_requested_paths(sparse, include):
+    now = datetime.now(timezone.utc)
+    boss = Person(3, 'Boss', now)
+    report = Person(4, 'Report', now)
+    shared = Person(2, 'Shared', now, manager=boss, reports=[report])
+    root = Person(1, 'Root', now, manager=shared, reports=[shared])
+    fieldsets = FieldsetSpecList.from_iterable([
+        FieldsetSpec.parse('people', 'name'),
+    ]) if sparse else None
+
+    document = serialize_document(
+        root, PersonResource,
+        include=include, fieldsets=fieldsets,
+    )
+
+    assert {item.id for item in document.included} == {'2', '3', '4'}
+    assert len(document.included) == 3
+
+
+def test_include_traverses_primary_resources_without_duplicating_them():
+    now = datetime.now(timezone.utc)
+    report = Person(3, 'Report', now)
+    manager = Person(2, 'Manager', now, reports=[report])
+    employee = Person(1, 'Employee', now, manager=manager)
+    manager.manager = employee
+
+    document = serialize_collection(
+        [employee, manager], PersonResource, include='manager.reports',
+    )
+
+    assert [item.id for item in document.included] == ['3']
+
+
+def test_to_many_request_rejects_null_linkage():
+    document = JSONAPIRequestDocument.model_validate({
+        'data': {
+            'type': 'writable-people', 'id': '1',
+            'relationships': {'reports': {'data': None}},
+        },
+    })
+    with pytest.raises(ResourceRequestError) as caught:
+        validate_request_document(document, WritablePersonResource, operation='update')
+    assert caught.value.code == 'invalid-relationship-cardinality'
+    assert caught.value.pointer == '/data/relationships/reports/data'

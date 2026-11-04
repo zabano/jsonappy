@@ -55,3 +55,28 @@ def test_range_filter_allows_one_open_boundary(value, expected):
     resolved = resolve_filters(ProductResource, specs)
 
     assert resolved[0].values == expected
+
+
+@pytest.mark.parametrize(('value', 'expected'), [
+    ('2026-01-01T10:00:00+01:00..2026-01-02T12:30:00Z',
+     ('2026-01-01T10:00:00+01:00', '2026-01-02T12:30:00Z')),
+    ('2026-01-01T10:00:00..', ('2026-01-01T10:00:00', '')),
+    ('..2026-01-02T12:30:00Z', ('', '2026-01-02T12:30:00Z')),
+])
+def test_datetime_range_preserves_timestamp_colons(value, expected):
+    from jsonapy.resource import DateTime
+
+    class EventResource(Resource):
+        type = 'filter-events'
+        starts_at = DateTime(filterable=RangeFilter())
+
+    resolved = resolve_filters(EventResource, FilterSpecList.parse({
+        'filter[starts_at]': value,
+    }))
+    assert resolved[0].values == expected
+
+
+@pytest.mark.parametrize('value', ['..', '1..2..3', '1:2:3'])
+def test_rejects_empty_or_ambiguous_ranges(value):
+    with pytest.raises(FilterResolutionError):
+        resolve_filters(ProductResource, FilterSpecList.parse({'filter[price]': value}))

@@ -1,6 +1,9 @@
+from dataclasses import replace
 from typing import Any
 
-from sqlalchemy import Select
+from sqlalchemy import Select, inspect
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.util import ClauseAdapter
 
 from .fieldsets import (
     SQLAlchemyFieldsetError,
@@ -94,12 +97,13 @@ class SQLAlchemyResolvedQuery:
 def _apply_relationship_joins(
         stmt: Select[Any],
         query: SQLAlchemyResolvedQuery,
-) -> Select[Any]:
+) -> tuple[Select[Any], SQLAlchemyResolvedQuery]:
     """
     Join each to-one relationship path required by filters and sorts.
 
     Prefixes are applied before deeper paths and shared prefixes are
-    joined only once.
+    joined only once. Repeated target models receive independent aliases;
+    expressions are adapted without mutating the resolved input query.
     """
 
     filter_paths = tuple(
@@ -122,7 +126,8 @@ def _apply_relationship_joins(
         for length in range(1, len(relationships) + 1)
     }
 
-    joined: set[tuple[tuple[type[Any], str], ...]] = set()
+    entities: dict[tuple[tuple[type[Any], str], ...], Any] = {}
+    used_models = {relationships[0].parent.class_ for relationships in paths}
 
     for relationships in sorted(paths, key=len):
         for length in range(1, len(relationships) + 1):
@@ -132,27 +137,38 @@ def _apply_relationship_joins(
                 for relationship in prefix
             )
 
-            if key in joined:
+            if key in entities:
                 continue
 
-            attribute = prefix[-1].class_attribute
+            relationship = prefix[-1]
+            parent = entities[key[:-1]] if length > 1 else relationship.parent.class_
+            target_model = relationship.mapper.class_
+            target = aliased(target_model) if target_model in used_models else target_model
+            used_models.add(target_model)
+            attribute = getattr(parent, relationship.key)
+            stmt = stmt.join(target, attribute, isouter=key not in required)
+            entities[key] = target
 
-            if attribute is None:
-                raise SQLAlchemyQueryError(
-                    "Unable to obtain class-bound attribute for "
-                    f"relationship {prefix[-1].key!r}.",
-                )
+    def adapt(item: Any) -> Any:
+        if not item.path.relationships:
+            return item
+        key = tuple(
+            (relationship.parent.class_, relationship.key)
+            for relationship in item.path.relationships
+        )
+        entity = inspect(entities[key])
+        if not entity.is_aliased_class:
+            return item
+        expression = ClauseAdapter(entity.selectable).traverse(item.expression)
+        return replace(item, expression=expression)
 
-            if key in required:
-                stmt = stmt.join(attribute)
-            else:
-                # Sorting must not discard roots whose optional related
-                # resource is absent.
-                stmt = stmt.outerjoin(attribute)
-
-            joined.add(key)
-
-    return stmt
+    return stmt, SQLAlchemyResolvedQuery(
+        filters=tuple(adapt(item) for item in query.filters),
+        sorts=tuple(adapt(item) for item in query.sorts),
+        fieldsets=query.fieldsets,
+        include_options=query.include_options,
+        page=query.page,
+    )
 
 
 # ==========================================================================
@@ -368,7 +384,7 @@ def apply_sqlalchemy_query(
     Pagination is applied last.
     """
 
-    stmt = _apply_relationship_joins(
+    stmt, query = _apply_relationship_joins(
         stmt,
         query,
     )

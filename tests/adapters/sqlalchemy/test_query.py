@@ -176,3 +176,76 @@ def test_builds_query_directly_from_query_spec(article_types):
     assert "WHERE fixture_articles.rank = 3" in compiled
     assert "ORDER BY fixture_articles.rank DESC" in compiled
     assert "LIMIT 5" in compiled
+
+
+def test_distinct_paths_to_same_table_filter_sort_and_count():
+    from sqlalchemy import ForeignKey, String
+    from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+    from jsonapy.resource import Resource, Relationship, String as StringField
+
+    class Base(DeclarativeBase):
+        pass
+
+    class Person(Base):
+        __tablename__ = 'review_people'
+        id: Mapped[int] = mapped_column(primary_key=True)
+        name: Mapped[str] = mapped_column(String)
+        manager_id: Mapped[int | None] = mapped_column(ForeignKey('review_people.id'))
+        manager: Mapped['Person | None'] = relationship(remote_side=[id])
+
+    class Article(Base):
+        __tablename__ = 'review_articles'
+        id: Mapped[int] = mapped_column(primary_key=True)
+        author_id: Mapped[int] = mapped_column(ForeignKey('review_people.id'))
+        editor_id: Mapped[int | None] = mapped_column(ForeignKey('review_people.id'))
+        author: Mapped[Person] = relationship(foreign_keys=[author_id])
+        editor: Mapped[Person | None] = relationship(foreign_keys=[editor_id])
+
+    class PersonResource(Resource):
+        type = 'query-people'
+        model = Person
+        name = StringField(sortable=True, filterable=True)
+        manager = Relationship(lambda: PersonResource)
+
+    class ArticleResource(Resource):
+        type = 'query-articles'
+        model = Article
+        author = Relationship(PersonResource)
+        editor = Relationship(PersonResource)
+
+    engine = create_engine('sqlite://')
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        boss = Person(name='Boss')
+        alice = Person(name='Alice', manager=boss)
+        bob = Person(name='Bob', manager=alice)
+        session.add_all([
+            Article(id=1, author=alice, editor=bob),
+            Article(id=2, author=bob, editor=alice),
+            Article(id=3, author=alice, editor=None),
+        ])
+        session.commit()
+        stmt = build_sqlalchemy_query(
+            select(Article), ArticleResource,
+            filters=FilterSpecList.parse({
+                'filter[author.name]': 'Alice', 'filter[editor.name]': 'Bob',
+            }),
+            sorts=SortSpecList.parse('editor.name,author.name'),
+        )
+        assert [row.id for row in session.scalars(stmt)] == [1]
+        assert session.scalar(build_sqlalchemy_count_query(stmt)) == 1
+
+        stmt = build_sqlalchemy_query(
+            select(Article), ArticleResource,
+            sorts=SortSpecList.parse('author.manager.name,editor.manager.name'),
+            page=PageSpec(size=2),
+        )
+        assert len(session.scalars(stmt).all()) == 2
+        assert session.scalar(build_sqlalchemy_count_query(stmt)) == 3
+
+        stmt = build_sqlalchemy_query(
+            select(Person), PersonResource,
+            filters=FilterSpecList.parse({'filter[manager.manager.name]': 'Boss'}),
+            sorts=SortSpecList.parse('manager.name'),
+        )
+        assert [row.name for row in session.scalars(stmt)] == ['Bob']

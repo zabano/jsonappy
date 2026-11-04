@@ -62,3 +62,7 @@ fieldsets/includes before a mutation has side effects.
 
 The exception handlers apply globally to FastAPI validation errors
 when installed. Account for this when mixing JSON:API and unrelated routes.
+
+To-many mutation relationships require an array of resource identifiers.
+Use `{"data": []}` to clear a to-many relationship; `{"data": null}` is valid
+only for a nullable to-one relationship.
