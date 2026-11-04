@@ -1,15 +1,20 @@
 import pytest
 
 from jsonapy.query.fieldsets import FieldsetResolutionError, FieldsetSpec, FieldsetSpecList, resolve_fieldsets
-from jsonapy.resource import Relationship, Resource, String
+from jsonapy.resource import Relationship, Resource, String, ResourceRegistry
+
+
+TEST_REGISTRY = ResourceRegistry()
 
 
 class UserResource(Resource):
+    registry = TEST_REGISTRY
     type = "users"
     name = String()
 
 
 class PostResource(Resource):
+    registry = TEST_REGISTRY
     type = "posts"
     title = String(public_name="displayTitle")
     author = Relationship(UserResource)

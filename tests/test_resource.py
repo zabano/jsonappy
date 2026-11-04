@@ -1,16 +1,18 @@
 import pytest
 
 import jsonapy
-from jsonapy.resource import Relationship, Resource, String
+from jsonapy.resource import Relationship, Resource, ResourceRegistry, String
 
 
 def test_public_package_exports_are_importable():
     assert jsonapy.Resource is Resource
+    assert jsonapy.ResourceRegistry is ResourceRegistry
     assert jsonapy.__all__ == [
         "ComputedField",
         "Field",
         "Relationship",
         "Resource",
+        "ResourceRegistry",
     ]
 
 

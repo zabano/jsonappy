@@ -1,7 +1,8 @@
 """Declarative JSON:API resources with optional framework adapters.
 
-The top-level namespace exposes Resource, Field, Relationship, and
-ComputedField. Import concrete field types from jsonapy.resource and query
+The top-level namespace exposes Resource, ResourceRegistry, Field,
+Relationship, and ComputedField. Import concrete field types from
+jsonapy.resource and query
 specifications from jsonapy.query. Both layers use only the standard library.
 Framework integrations live in jsonapy.adapters and require their extras.
 
@@ -13,6 +14,7 @@ from .resource import (
     Field,
     Relationship,
     Resource,
+    ResourceRegistry,
 )
 
 __all__ = [
@@ -20,4 +22,5 @@ __all__ = [
     "Field",
     "Relationship",
     "Resource",
+    "ResourceRegistry",
 ]

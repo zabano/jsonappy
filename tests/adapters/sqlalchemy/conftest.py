@@ -3,7 +3,7 @@ from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from jsonapy.resource import Integer as IntegerField
-from jsonapy.resource import Relationship, Resource
+from jsonapy.resource import Relationship, Resource, ResourceRegistry
 from jsonapy.resource import String as StringField
 
 
@@ -45,7 +45,11 @@ class Article(Base):
     tags: Mapped[list[Tag]] = relationship()
 
 
+TEST_REGISTRY = ResourceRegistry()
+
+
 class OrganizationResource(Resource):
+    registry = TEST_REGISTRY
     type = "organizations"
     model = Organization
     name = StringField(sortable=True, filterable=True)
@@ -53,6 +57,7 @@ class OrganizationResource(Resource):
 
 
 class AuthorResource(Resource):
+    registry = TEST_REGISTRY
     type = "authors"
     model = Author
     name = StringField(sortable=True, filterable=True)
@@ -61,12 +66,14 @@ class AuthorResource(Resource):
 
 
 class TagResource(Resource):
+    registry = TEST_REGISTRY
     type = "tags"
     model = Tag
     label = StringField(sortable=True, filterable=True)
 
 
 class ArticleResource(Resource):
+    registry = TEST_REGISTRY
     type = "articles"
     model = Article
     rank = IntegerField(sortable=True, filterable=True)

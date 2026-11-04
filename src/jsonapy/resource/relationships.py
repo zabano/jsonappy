@@ -7,7 +7,10 @@ authorize related objects, and persist relationship changes.
 """
 
 from collections.abc import Callable
+from copy import copy
 from typing import TYPE_CHECKING, TypeAlias, cast
+
+from .registry import ResourceRegistry
 
 if TYPE_CHECKING:
     from .base import Resource
@@ -91,14 +94,26 @@ class Relationship:
 
         # Filled by ResourceMeta.
         self.name: str | None = None
+        self._registry: ResourceRegistry | None = None
+
+    def _bind(self, name: str, registry: ResourceRegistry) -> "Relationship":
+        """Copy a declaration for one owning resource and its registry."""
+        bound = copy(self)
+        bound.name = name
+        bound._registry = registry
+        return bound
 
     def resolve_resource(self) -> type["Resource"]:
         """
         Resolve and return the target Resource class.
 
         Raises:
-            LookupError: A string target is not in the process-wide registry.
+            LookupError: A string target is not in the owning resource's registry.
             TypeError: The target or deferred callable is invalid.
+
+        Bound string targets use the owning resource's registry. Unbound
+        declarations use Resource.registry. Class and callable targets are
+        explicit references and may point to another registry.
 
         A Resource class is callable too, so we distinguish a Resource
         class from a deferred zero-argument callable explicitly.
@@ -109,7 +124,8 @@ class Relationship:
         resource = self._resource_reference
 
         if isinstance(resource, str):
-            resolved = Resource.get_resource(resource)
+            registry = self._registry if self._registry is not None else Resource.registry
+            resolved = registry.get(resource)
 
             if resolved is None:
                 raise LookupError(

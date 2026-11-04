@@ -7,6 +7,7 @@ This namespace has no framework or database dependencies.
 """
 
 from .base import Resource
+from .registry import ResourceRegistry
 from .fields import (
     AnyField,
     Boolean,
@@ -56,6 +57,7 @@ __all__ = [
     "RangeFilter",
     "ResolvedFieldPath",
     "Resource",
+    "ResourceRegistry",
     "Sortable",
     "String",
     "TextFilter",

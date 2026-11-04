@@ -1,19 +1,25 @@
 import pytest
 
 from jsonapy.query.include import IncludeResolutionError, IncludeSpecList, resolve_includes
-from jsonapy.resource import Relationship, Resource
+from jsonapy.resource import Relationship, Resource, ResourceRegistry
+
+
+TEST_REGISTRY = ResourceRegistry()
 
 
 class OrganizationResource(Resource):
+    registry = TEST_REGISTRY
     type = "organizations"
 
 
 class PersonResource(Resource):
+    registry = TEST_REGISTRY
     type = "people"
     organization = Relationship(OrganizationResource)
 
 
 class CommentResource(Resource):
+    registry = TEST_REGISTRY
     type = "comments"
     author = Relationship(lambda: PersonResource)
 

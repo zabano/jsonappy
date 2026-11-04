@@ -1,10 +1,14 @@
 from jsonapy.query.fieldsets import FieldsetSpec, FieldsetSpecList
 from jsonapy.query.filtering import FilterSpecList
 from jsonapy.query.spec import QuerySpec, resolve_query
-from jsonapy.resource import Integer, Resource
+from jsonapy.resource import Integer, Resource, ResourceRegistry
+
+
+TEST_REGISTRY = ResourceRegistry()
 
 
 class ItemResource(Resource):
+    registry = TEST_REGISTRY
     type = "items"
     rank = Integer(sortable=True, filterable=True)
 

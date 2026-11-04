@@ -35,11 +35,32 @@ strings, or deferred zero-argument callables. Relationships also accept
 Set `name_style` to `identity`, `camelcase`, or `dashes` for default public
 names. Use `abstract = True` for configured resource base classes. Concrete
 resources register their type by default; `register = False` disables this.
-Type strings resolve through the process-wide registry, so use distinct types.
+Duplicate types in the same registry raise `ValueError`.
 
 Identifiers default to `obj.id`; customize `id_attribute` or `id_resolver`.
-Serialized identifiers are strings. `Resource.validate_all()` resolves deferred
-relationship targets after application resource modules have been imported.
+Serialized identifiers are strings. Call `validate_all()` on your resource
+base after importing its declarations to check deferred relationship targets.
 
 Invalid duplicate public names and reserved names (`id`, `type`) are rejected
 when the resource class is defined.
+
+## Registries
+
+Resources share `Resource.registry` by default. Give each application or test
+suite a `ResourceRegistry` to keep type names and string targets isolated:
+
+```python
+from jsonapy import Resource, ResourceRegistry
+
+
+class AppResource(Resource):
+    abstract = True
+    registry = ResourceRegistry()
+```
+
+Declare application resources by subclassing `AppResource`. Subclasses inherit
+the registry. String relationship targets resolve only
+within the owning resource's registry; direct classes and callables remain
+explicit references. `get_resource()`, `registered_types()`, and `validate_all()`
+on a resource use its registry. The registry also exposes `get()`,
+`registered_types()`, and `validate_all()` directly.

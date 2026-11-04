@@ -14,7 +14,7 @@ from jsonapy.adapters.fastapi import (
 )
 from jsonapy.adapters.pydantic import JSONAPIRequestDocument
 from jsonapy.query.pagination import PaginationMeta
-from jsonapy.resource import Resource, String
+from jsonapy.resource import Resource, String, ResourceRegistry
 
 
 @dataclass
@@ -23,7 +23,11 @@ class Item:
     name: str
 
 
+TEST_REGISTRY = ResourceRegistry()
+
+
 class ItemResource(Resource):
+    registry = TEST_REGISTRY
     type = "items"
     name = String(sortable=True, filterable=True, required=True)
 

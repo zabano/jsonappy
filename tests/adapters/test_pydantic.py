@@ -18,6 +18,7 @@ from jsonapy.resource import (
     Integer,
     Relationship,
     Resource,
+    ResourceRegistry,
     String,
 )
 
@@ -31,7 +32,11 @@ class Person:
     reports: list["Person"] = field(default_factory=list)
 
 
+TEST_REGISTRY = ResourceRegistry()
+
+
 class PersonResource(Resource):
+    registry = TEST_REGISTRY
     type = "people"
 
     name = String()
@@ -51,16 +56,19 @@ class Metadata:
 
 
 class MetadataResource(Resource):
+    registry = TEST_REGISTRY
     type = "metadata"
 
     content = JSON(nullable=True)
 
 
 class TeamResource(Resource):
+    registry = TEST_REGISTRY
     type = "teams"
 
 
 class WritablePersonResource(Resource):
+    registry = TEST_REGISTRY
     type = "writable-people"
     name_style = "camelcase"
 

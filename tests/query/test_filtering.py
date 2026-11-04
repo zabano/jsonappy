@@ -1,16 +1,21 @@
 import pytest
 
 from jsonapy.query.filtering import FilterOp, FilterResolutionError, FilterSpecList, resolve_filters
-from jsonapy.resource import Boolean, Integer, Relationship, Resource, String
+from jsonapy.resource import Boolean, Integer, Relationship, Resource, String, ResourceRegistry
 from jsonapy.resource.options import BooleanFilter, MultiValueFilter, RangeFilter
 
 
+TEST_REGISTRY = ResourceRegistry()
+
+
 class CategoryResource(Resource):
+    registry = TEST_REGISTRY
     type = "categories"
     code = String(filterable=MultiValueFilter())
 
 
 class ProductResource(Resource):
+    registry = TEST_REGISTRY
     type = "products"
     price = Integer(filterable=RangeFilter())
     active = Boolean(filterable=BooleanFilter())
@@ -67,6 +72,7 @@ def test_datetime_range_preserves_timestamp_colons(value, expected):
     from jsonapy.resource import DateTime
 
     class EventResource(Resource):
+        registry = ResourceRegistry()
         type = 'filter-events'
         starts_at = DateTime(filterable=RangeFilter())
 

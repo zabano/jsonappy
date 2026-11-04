@@ -1,15 +1,20 @@
 import pytest
 
 from jsonapy.query.sorting import SortOrder, SortResolutionError, SortSpecList, resolve_sorts
-from jsonapy.resource import Integer, Relationship, Resource, String
+from jsonapy.resource import Integer, Relationship, Resource, String, ResourceRegistry
+
+
+TEST_REGISTRY = ResourceRegistry()
 
 
 class AuthorResource(Resource):
+    registry = TEST_REGISTRY
     type = "authors"
     name = String(sortable=True)
 
 
 class ArticleResource(Resource):
+    registry = TEST_REGISTRY
     type = "articles"
     rank = Integer(sortable=True)
     title = String()

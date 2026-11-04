@@ -13,7 +13,7 @@ from jsonapy.adapters.pydantic import (
     validate_request_document,
 )
 from jsonapy.query.fieldsets import FieldsetSpec, FieldsetSpecList
-from jsonapy.resource import Decimal, Resource
+from jsonapy.resource import Decimal, Resource, ResourceRegistry
 
 
 @dataclass
@@ -22,7 +22,11 @@ class Product:
     unit_price: object
 
 
+TEST_REGISTRY = ResourceRegistry()
+
+
 class ProductResource(Resource):
+    registry = TEST_REGISTRY
     type = "decimal-products"
     register = False
     unit_price = Decimal(public_name="unitPrice", required=True, nullable=True)

@@ -2,7 +2,7 @@
 
 from typing import Any, assert_type
 
-from jsonapy import Resource
+from jsonapy import Resource, ResourceRegistry
 from jsonapy.adapters.pydantic import (
     JSONAPIDocument,
     JSONAPIRequestDocument,
@@ -21,6 +21,11 @@ class ArticleResource(Resource):
 
 
 def core_contracts(resource: type[Resource]) -> None:
+    assert_type(resource.registry, ResourceRegistry)
+    assert_type(resource.get_resource("articles"), type[Resource] | None)
+    registry = ResourceRegistry()
+    assert_type(registry.get("articles"), type[Resource] | None)
+    assert_type(registry.registered_types(), frozenset[str])
     assert_type(resource.fields(), dict[str, Field])
     assert_type(resource.relationships(), dict[str, Relationship])
     query = QuerySpec.parse(sort="title")

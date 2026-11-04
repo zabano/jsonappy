@@ -2,16 +2,18 @@
 
 ResourceMeta collects inherited fields and relationships and validates public
 names when classes are defined. Resource provides declaration lookups and
-identifier resolution. Concrete types register globally unless registration
-is disabled; validate_all resolves deferred targets after imports complete.
+identifier resolution. Concrete types register in their configured registry
+unless registration is disabled; validate_all resolves deferred targets after
+imports complete.
 No model access beyond identifier resolution or persistence occurs here.
 """
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, ClassVar, Type
+from typing import TYPE_CHECKING, Any, ClassVar, Type, cast
 
 from .fields import Field
 from .relationships import Relationship
+from .registry import ResourceRegistry
 
 if TYPE_CHECKING:
     from .paths import ResolvedFieldPath
@@ -45,6 +47,9 @@ class ResourceMeta(type):
         # an abstract configured base while its subclasses remain concrete.
         is_abstract = bool(namespace.get("abstract", False))
         cls.abstract = is_abstract
+        registry = getattr(cls, "registry", None)
+        if not isinstance(registry, ResourceRegistry):
+            raise TypeError(f"Resource {name!r} registry must be a ResourceRegistry.")
 
         fields: dict[str, Field] = {}
         relationships: dict[str, Relationship] = {}
@@ -80,15 +85,16 @@ class ResourceMeta(type):
                 fields[attribute_name] = value
 
             elif isinstance(value, Relationship):
-                value.name = attribute_name
-
-                if value.public_name_override is None:
-                    value.public_name_override = mcls._format_public_name(
-                        cls,
-                        attribute_name,
-                    )
-
                 relationships[attribute_name] = value
+
+        # Inherited and reused relationships need independent binding so a
+        # subclass registry cannot change resolution on its parent or siblings.
+        for attribute_name, relationship in relationships.items():
+            bound = relationship._bind(attribute_name, registry)
+            if bound.public_name_override is None:
+                bound.public_name_override = mcls._format_public_name(cls, attribute_name)
+            relationships[attribute_name] = bound
+            setattr(cls, attribute_name, bound)
 
         # ------------------------------------------------------------------
         # Store declarations
@@ -104,21 +110,12 @@ class ResourceMeta(type):
         mcls._validate_resource(cls, is_abstract=is_abstract)
 
         resource_type: str | None = getattr(cls, "type", None)
-        registry: dict[str, ResourceMeta] | None = getattr(
-            cls,
-            "_registry",
-            None,
-        )
-
-        if registry is None:
-            return cls
-
         if (
                 not is_abstract
                 and resource_type
                 and getattr(cls, "register", True)
         ):
-            registry[resource_type] = cls
+            registry.register(cast(type["Resource"], cls))
 
         return cls
 
@@ -248,9 +245,11 @@ class Resource(metaclass=ResourceMeta):
     - Pydantic
     - Marshmallow
 
-    Concrete subclasses require a nonempty ``type`` and register it globally
-    unless ``register = False``. Abstract bases use ``abstract = True``;
-    abstractness is not inherited. Identifiers come from ``id_attribute``
+    Concrete subclasses require a nonempty ``type`` and register it in
+    ``registry`` unless ``register = False``. A default registry is shared;
+    assign a ResourceRegistry on an abstract base to isolate an application.
+    Duplicate type registrations raise ValueError. Abstract bases use
+    ``abstract = True``; abstractness is not inherited. Identifiers come from ``id_attribute``
     (default ``id``) or ``id_resolver`` when supplied.
 
     Examples:
@@ -275,17 +274,17 @@ class Resource(metaclass=ResourceMeta):
 
     _declared_fields: dict[str, Field]
     _declared_relationships: dict[str, Relationship]
-    _registry: ClassVar[dict[str, Type["Resource"]]] = {}
+    registry: ClassVar[ResourceRegistry] = ResourceRegistry()
 
     @classmethod
     def get_resource(cls, type_name: str) -> Type["Resource"] | None:
-        """Return the declarative resource registered for a JSON:API type."""
-        return Resource._registry.get(type_name)
+        """Look up a JSON:API type in this resource's registry."""
+        return cls.registry.get(type_name)
 
     @classmethod
     def registered_types(cls) -> frozenset[str]:
-        """Return the JSON:API types known to the declarative registry."""
-        return frozenset(Resource._registry)
+        """Return a snapshot of type names in this resource's registry."""
+        return cls.registry.registered_types()
 
     @classmethod
     def resolve_id(cls, obj: Any) -> Any:
@@ -302,9 +301,8 @@ class Resource(metaclass=ResourceMeta):
 
     @classmethod
     def validate_all(cls) -> None:
-        """Validate every registered declarative resource."""
-        for resource in tuple(Resource._registry.values()):
-            resource.validate()
+        """Validate every resource in this class's registry after imports."""
+        cls.registry.validate_all()
 
     # ------------------------------------------------------------------
     # Fields
